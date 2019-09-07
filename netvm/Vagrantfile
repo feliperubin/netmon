@@ -1,0 +1,234 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Author: Felipe Pfeifer Rubin
+# Contact: felipe.rubin@edu.pucrs.br
+#
+
+#
+#
+# | | 
+#
+#
+#
+
+MACHINE_NAME= "n"
+SMB_SHARE= "n"
+VM_MEMORY = 512
+VM_VCPUS = 1 #vCPU
+NESTED_VIRT=false # Nested Virtualization support
+LINKED_CLONE=true # Use Linked Clone instead of full VM
+DISABLE_SYNCED_FOLDER=false # Disable Synced folder
+
+# Name of each node machine
+NODE_MACHINES=3
+
+# NETWORK="10.32.45.0/24"
+
+# def next_addr(addr=PRIVATE_NETWORK)
+#   nw_addr = PRIVATE_NETWORK.split("/")
+#   nw_addr
+#   Enumerator.new do |enum|
+#     i = 0
+#     while i < NODE_MACHINES
+#       enum.yield i
+#       i+=1
+#     end
+#   end
+# end
+
+
+
+Vagrant.configure("2") do |config|
+  
+  # config.vm.box = "generic/alpine38"
+  config.vm.box = 'bento/ubuntu-16.04'
+  
+  # config.vm.hostname = MACHINE_NAME
+  # the name vagrant recognizes it, e.g. vagrant status instead of define will be MACHINE_NAME
+  # config.vm.define MACHINE_NAME
+  config.vm.synced_folder '.', '/vagrant', disabled: DISABLE_SYNCED_FOLDER
+
+
+  # Creates many machines
+  # config.vm.define LB_MACHINE_NAME do |lb|
+  #   lb.vm.hostname = LB_MACHINE_NAME
+  #   lb.vm.network :forwarded_port, guest: 8080, host: 8080
+  #   lb.vm.network :forwarded_port, guest: 80, host: 8081
+  #   lb.vm.network "private_network", ip: "10.1.1.2", auto_config: false
+  # end
+
+  config.ssh.forward_x11 = true #Enables X11
+
+
+  (1..NODE_MACHINES).each do |i|
+
+    config.vm.define "#{MACHINE_NAME}#{i}" do |nodes|
+      nodes.vm.hostname = "#{MACHINE_NAME}#{i}"
+      nodes.vm.network "private_network", ip: "192.168.11.#{i+1}", auto_config: true
+      nodes.vm.provision "shell", inline: "#{MACHINE_NAME}#{i} has IP: 192.168.1.#{i+1}"
+    end
+  
+
+  
+  # config.ssh.forward_agent = true
+
+  # config.vm.netwo
+  # config.vm.network "public_network"
+
+  config.vm.provider :parallels do |v, override|
+      # override.vm.box = "bento/ubuntu-16.04"
+      v.name = "#{MACHINE_NAME}#{i}"
+      v.linked_clone = LINKED_CLONE
+      v.memory = VM_MEMORY
+      v.cpus = VM_VCPUS
+      required_plugins = %w( vagrant-parallels )
+      required_plugins.each do |plugin|
+          system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+      end
+      # v.check_guest_tools = true
+      v.update_guest_tools = false
+
+      if NESTED_VIRT then
+        #Enables nested virtualization
+        v.customize ["set", :id, "--nested-virt", "on"]
+      end
+      #Enables adaptive hypervisor, better core usage
+      v.customize ["set", :id, "--adaptive-hypervisor", "on"]
+
+      #SSH without vagrant without the need of typing ssh key
+      v.customize     ["set", :id, "--sync-ssh-ids","on"]
+      v.customize ["set",:id, "--time-sync","on"] 
+  end
+
+  config.vm.provider :vmware_fusion do |v, override|
+    v.vmx['displayname'] = "#{MACHINE_NAME}#{i}"
+    v.vmx['memsize'] = VM_MEMORY
+    v.vmx['numvcpus'] = VM_VCPUS
+    if NESTED_VIRT then
+      # Enables nested virtualization
+      v.vmx["vhv.enable"] = "TRUE"
+    end
+    # override.config.vm.network "forwarded_port", guest: 22, host: 2497, id: 'ssh'
+
+    # Enables Retina / HiDPI
+    #v.vmx["gui.fitguestusingnativedisplayresolution"] = "TRUE"
+    
+    # Enables Sound
+    # v.vmx["sound.startconnected"] = "TRUE"
+    # v.vmx["sound.present"] = "TRUE"
+    # v.vmx["sound.autodetect"] = "TRUE"
+
+  end
+
+  config.vm.provider :virtualbox do |v, override|
+    v.name = "#{MACHINE_NAME}#{i}"
+    v.memory = VM_MEMORY
+    v.cpus = VM_VCPUS
+    v.gui = false
+
+    if LINKED_CLONE then
+      v.linked_clone = true
+    end
+    required_plugins = %w( vagrant-vbguest )
+    required_plugins.each do |plugin|
+      system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+    end
+    if NESTED_VIRT then
+      v.customize ["modifyvm",:id,"--hwvirtex", "on"]
+      v.customize ["modifyvm",:id,"--nested-hw-virt", "on"]
+      v.customize ["modifyvm",:id,"--nestedpaging", "on"]
+      v.customize ["modifyvm",:id,"--largepages", "on"]
+      v.customize ["modifyvm",:id,"--vtxux", "on"]
+      v.customize ["modifyvm",:id,"--vtxvpid", "on"]    
+    end
+  end  
+
+  
+  # config.vm.provision 'shell' do |s|
+  #   s.inline = "echo setting up #{MACHINE_NAME}#{i}"
+  #   config.vm.provider :vmware_fusion do |v, override|
+      
+  #   end
+  #   config.vm.provider :virtualbox do |v, override|
+      
+  #   end
+  #   config.vm.provider :parallels do |v, override|
+      
+  #   end
+  # end
+
+  config.vm.provision 'essentials',type: 'shell',privileged: true, run: "once", preserve_order: true, inline:
+  "
+    # dpkg-reconfigure locales
+    locale-gen en_US.UTF-8
+    echo export LC_ALL='en_US.UTF-8' >> /home/vagrant/.bashrc  
+    apt-get update
+    systemctl stop apt-daily.timer
+    systemctl disable apt-daily.timer
+    systemctl mask apt-daily.service
+    systemctl daemon-reload
+    apt-get remove popularity-contest
+
+    # Additional
+    ln -s /vagrant /home/vagrant/t2
+    echo -e \"# Network Nodes\n\" >> /etc/hosts
+    for (( j=1; j <= #{NODE_MACHINES}; j++)); do
+      if (( $j -eq #{i} )); 
+      then
+          echo -e 127.0.0.1  #{MACHINE_NAME}#{j}\n\" >> /etc/hosts
+      else
+        echo -e \"192.168.11.\"$(($j+1))  #{MACHINE_NAME}#{j}\n\" >> /etc/hosts
+      fi
+      
+    end
+  "
+  config.vm.provision 'networking',type: 'shell',privileged: true, run: "once", preserve_order: true, inline:
+  "
+    apt-get -y install iproute traceroute python3-pip
+  "
+  config.vm.provision 'x11',type: 'shell',privileged: true, run: "never", preserve_order: true, inline:
+  "
+    apt-get install -y xauth
+    systemctl daemon-reload
+    echo ForwardX11 yes >> /etc/ssh/ssh_config
+    echo X11Fowarding yes >> /etc/ssh/ssh_config
+    echo XAuthLocation /usr/X11/bin/xauth >> /etc/ssh/ssh_config
+    echo 11UseLocalHost no >> /etc/ssh/ssh_config
+  "
+  config.vm.provision 'samba',type: 'shell',privileged: true, run: "never", preserve_order: true, inline:
+  "
+    apt-get install -y samba
+    echo [#{SMB_SHARE}] >> /etc/samba/smb.conf
+    echo comment = Public Shares >> /etc/samba/smb.conf
+    echo path = /home/vagrant/ >> /etc/samba/smb.conf
+    echo writeable = Yes >> /etc/samba/smb.conf
+    echo only guest = No >> /etc/samba/smb.conf
+    echo create mask = 0777 >> /etc/samba/smb.conf
+    echo directory mask = 0777 >> /etc/samba/smb.conf
+    echo browseable = yes >> /etc/samba/smb.conf
+    echo public = yes >> /etc/samba/smb.conf
+    echo inherit permissions = yes >> /etc/samba/smb.conf
+    echo force user = root >> /etc/samba/smb.conf
+    echo force group = root >> /etc/samba/smb.conf
+    service smbd restart
+  "
+
+  end
+
+# trigger reload
+
+  
+
+end
+
+
+
+
+
+
+
+
+
+
+
