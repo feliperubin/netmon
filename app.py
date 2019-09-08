@@ -23,6 +23,10 @@ ETH_P_ALL = 0x0003 # Every Packet
 ETH_P_IP=0x0800 # IP
 ETH_P_ARP=0x0806 # ARP
 
+ARP_OP_EQ=0x1 # ARP REQUEST
+ARP_OP_RE=0x2 # ARP REPLY
+# Note: Target HW Address is not filled in a request
+
 # https://docs.python.org/3/library/struct.html
 
 # class BinaryTools():
@@ -61,6 +65,13 @@ def nextp(s): # Reads next packet
 
 
 
+# class ARP_P(Packet):
+# 	def __init__():
+# 		self
+
+# class Packet():
+# 	def __init__(header):
+# 		self.header = header
 
 # RFC 793 - TCP
 # [:y)
@@ -93,13 +104,28 @@ while True:
 	# TCP Packet 
 	if eth_t == ETH_P_IP:
 		print(" Packet Type: IP")
+		
 	elif eth_t == ETH_P_ARP:
 		print(" Packet Type: ARP")
-	else:
-		print(" Packet Type: Unknown")
-	
 
-	time.sleep(1)
+		# arp_p = struct.unpack("!HHccH4sHHHH4s4s",packet[14:42])
+		arp_p = struct.unpack("!HHBBH6s4s6s4s",packet[14:42])
+		print("  Hardware Type: ",hex(arp_p[0]))
+		print("  Protocol Type: ",hex(arp_p[1]))
+		print("  Hardware Size: ",hex(arp_p[2]))
+		print("  Protocol Size: ",hex(arp_p[3]))
+		print("  OPcode: ",hex(arp_p[4]))
+		print("  Sender MAC Address: ",bytes2mac(arp_p[5]))
+		print("  Sender Protocol Address: ",socket.inet_ntoa(arp_p[6]))
+		print("  Target MAC Address: ",bytes2mac(arp_p[7]))
+		print("  Target Protocol Address: ",socket.inet_ntoa(arp_p[8]))
+
+	else:
+		# print(" Packet Type: Unknown")
+		pass
+
+
+	# time.sleep(1)
 
 
 
