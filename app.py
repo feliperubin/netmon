@@ -20,24 +20,29 @@ import time
 
 # From /usr/include/linux/if_ether.h
 ETH_P_ALL = 0x0003 # Every Packet
+ETH_P_IP=0x0800 # IP
+ETH_P_ARP=0x0806 # ARP
 
 # https://docs.python.org/3/library/struct.html
 
 # class BinaryTools():
 	# def self():
-def bytes_to_mac(bytesmac):
-    return ":".join("{:02x}".format(x) for x in bytesmac)
+
+bytes2mac = lambda x: ":".join(["{:02x}".format(xi) for xi in x])
+
+# hex_packet_t = lambda x: '{:04x}'.format(x)
+# def packet_type():
+
+
+# def bytes_to_mac(bytesmac):
+#     return ":".join("{:02x}".format(x) for x in bytesmac)
 
 #ascii representation of an hex chart (ex: 707 -> 'p')
-hex2ascii = lambda x: chr(int(x[:-1], 16))
+# hex2ascii = lambda x: chr(int(x[:-1], 16))
 
 
 # ! network=big-endian
 #
-#
-#
-
-
 # Creates a Socket RAW
 def init_socket_raw(iface="eth0"):
 	try:
@@ -53,6 +58,9 @@ def init_socket_raw(iface="eth0"):
 def nextp(s): # Reads next packet
 	while True:
 		yield s.recvfrom(65536)
+
+
+
 
 # RFC 793 - TCP
 # [:y)
@@ -75,11 +83,22 @@ def read_tcp(p):
 	# src_port = packet[:14]
 	# dst_port = packet[14:28]
 
-s = init_socket_raw()
+s = init_socket_raw("eth2")
 sread = nextp(s)
 while True:
 	packet,address = next(sread)
-	read_tcp(packet)
+	eth_h = packet[:14]
+	dst_addr,src_addr,eth_t = struct.unpack("!6s6sH",eth_h)
+	print("src:%s,dst:%s,type:%s" % (bytes2mac(dst_addr),bytes2mac(src_addr),hex(eth_t)))
+	# TCP Packet 
+	if eth_t == ETH_P_IP:
+		print(" Packet Type: IP")
+	elif eth_t == ETH_P_ARP:
+		print(" Packet Type: ARP")
+	else:
+		print(" Packet Type: Unknown")
+	
+
 	time.sleep(1)
 
 
