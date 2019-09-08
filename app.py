@@ -27,6 +27,10 @@ ARP_OP_EQ=0x1 # ARP REQUEST
 ARP_OP_RE=0x2 # ARP REPLY
 # Note: Target HW Address is not filled in a request
 
+IP_H_LEN=20
+ETH_H_LEN=14
+ARP_H_LEN=28
+
 # https://docs.python.org/3/library/struct.html
 
 # class BinaryTools():
@@ -104,6 +108,10 @@ while True:
 	# TCP Packet 
 	if eth_t == ETH_P_IP:
 		print(" Packet Type: IP")
+		ip_h = struct.unpack("!BBHHHBBH4s4s",packet[14:34])
+		print("  Version: ",(ip_h[0] & 0xf0) >> 4)
+		print("  TOS: ",hex(ip_h[1]))
+		print("  Length: ",int(hex(ip_h[2]),16))
 
 	elif eth_t == ETH_P_ARP:
 		print(" Packet Type: ARP")
@@ -114,7 +122,7 @@ while True:
 		print("  Protocol Type: ",hex(arp_p[1]))
 		print("  Hardware Size: ",hex(arp_p[2]))
 		print("  Protocol Size: ",hex(arp_p[3]))
-		print("  OPcode: ",hex(arp_p[4]))
+		print("  OPcode: ",hex(arp_p[4])," ("+ ("REQUEST" if arp_p[4] == 0x1 else "REPLY") +")")
 		print("  Sender MAC Address: ",bytes2mac(arp_p[5]))
 		print("  Sender Protocol Address: ",socket.inet_ntoa(arp_p[6]))
 		print("  Target MAC Address: ",bytes2mac(arp_p[7]))
