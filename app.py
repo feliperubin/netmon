@@ -100,11 +100,11 @@ while True:
 	packet,address = next(sread)
 	eth_h = packet[:14]
 	dst_addr,src_addr,eth_t = struct.unpack("!6s6sH",eth_h)
-	print("src:%s,dst:%s,type:%s" % (bytes2mac(dst_addr),bytes2mac(src_addr),hex(eth_t)))
+	print("Source: %s Target: %s Type: %s" % (bytes2mac(dst_addr),bytes2mac(src_addr),hex(eth_t)))
 	# TCP Packet 
 	if eth_t == ETH_P_IP:
 		print(" Packet Type: IP")
-		
+
 	elif eth_t == ETH_P_ARP:
 		print(" Packet Type: ARP")
 
