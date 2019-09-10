@@ -1,3 +1,5 @@
+# Vagrant
+/.vagrant
 
 # System Files
 .DS_Store
