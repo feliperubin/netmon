@@ -11,17 +11,17 @@ import time
 ETH_P_ALL = 0x0003 # Every Packet
 class SocketController:
 	def __init__(self,iface):
-		self.s = None
-		self.iface = iface
+		self.__s = None
+		self.__iface = iface
 		try:
-		    self.s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+		    self.__s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 		except OSError as msg:
 		    print('Error'+str(msg))
 		    sys.exit(1)
-		self.s.bind((self.iface,0))
-		print('Socket created on interface',self.iface)		
+		self.__s.bind((self.__iface,0))
+		print('Socket created on interface',self.__iface)		
 
 	def next(self): # Reads next packet
 		while True:
-			yield self.s.recvfrom(65536)
+			yield self.__s.recvfrom(65536)
 

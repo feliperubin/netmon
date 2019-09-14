@@ -15,7 +15,6 @@ class Monitor():
 		self.packet_data = {}
 		self.packet_metrics = {}
 		self.iface = iface
-		# self.sc = SocketController()
 		self.sc = None
 		self.on = 0
 	# Set Network Interface
