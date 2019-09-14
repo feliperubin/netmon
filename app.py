@@ -6,6 +6,8 @@ import time
 # - Ethernet: endereços MAC origem e destino, tipo do pacote
 # - ARP: ARP request/reply, endereços MAC origem e destino, endereços IP origem e destino
 # - IP: endereços IP origem e destino, protocolo encapsulado, TTL
+#- ICMP: tipo de pacote (Echo Reply, Destination Unreachable, etc) - https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
+ #  - se for Echo Request ou Echo Reply, incluir também: identificador, número de sequência e payload (em ASCII)
 # - TCP: portas origem e destino
 # - UDP: portas origem e destino
 
@@ -17,6 +19,26 @@ import time
 # - 5 IPs que mais enviaram pacotes
 # - 5 IPS que mais receberam pacotes
 # - incluir mais 2 estatísticas que acharem interessante
+
+
+# intervalo de portas nos decidimos o formato quevai ser passado
+
+# Mostrar maior e menor tamanhos (ao todo)
+# Termos:
+# TCP segments
+# UDP datagrams
+# IP packets
+# Ethernet frames
+
+# Conn UDP
+# 
+# <- ICMP Destination Unreachable (Port Unreachable)
+
+# Conn TCP
+# Syn -> 
+# <- Syn, Ack
+# Ack ->
+# Só precisamos fazer
 
 # From /usr/include/linux/if_ether.h
 ETH_P_ALL = 0x0003 # Every Packet
