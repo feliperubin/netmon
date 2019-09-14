@@ -8,7 +8,9 @@ import socket,sys
 import struct
 import os
 import time
+
 ETH_P_ALL = 0x0003 # Every Packet
+
 class SocketController:
 	def __init__(self,iface):
 		self.__s = None
@@ -21,7 +23,7 @@ class SocketController:
 		self.__s.bind((self.__iface,0))
 		print('Socket created on interface',self.__iface)		
 
-	def next(self): # Reads next packet
+	def sniffer(self): # Packet Sniffer
 		while True:
 			yield self.__s.recvfrom(65536)
 
