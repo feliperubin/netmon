@@ -3,10 +3,53 @@
 **Ethernet Header**
 
 ```
-<DST ADDR: 6B> <SRC ADDR: 6B> <LENGTH: 2B>
+<DST MAC: 6B> <SRC MAC: 6B> <ETH Type / LENGTH: 2B>
 ```
 
+**ARP**
 
+
+**IP Header**
+
+- Ver: 4bits, IHL: 4bits
+- Type of Service (TOS): 2B
+- Total Length: 2B
+- Identification: 2B
+- Flags: 3bits , Fragment Offset: 13bits
+- TTL: 1B
+- Protocol: 1B
+- Checksum: 2B
+- Source Addr: 4B
+- Dest Addr: 4B
+- Data: 4B
+- Options (Remaining Data): ?
+
+```c
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Ver= 4 |IHL= 5 |Type of Service|       Total Length = 276      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Identification = 111      |Flg=1|     Fragment Offset = 0 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Time = 119  | Protocol = 6  |        Header Checksum        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         source address                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      destination address                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             data                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             data                              |
+\                                                               \
+\                                                               \
+|                             data                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             data                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
+**ICMP**
 
 ```python
 Character	Byte order	Size and alignment

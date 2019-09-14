@@ -42,7 +42,7 @@ def main():
 	# 	print("netmon:Unrecognized Parameters\nUsage:\
 	# 		python3 netmon.py -i <iface> -p <port-port> -m <mode>")
 	# 	exit(0)
-	monitor = Monitor(iface="eth2",mode=0)
+	monitor = Monitor(iface="eth2",mode=0,verbose=True)
 	monitor.start()
 
 

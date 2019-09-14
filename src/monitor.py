@@ -7,13 +7,15 @@
 # Raw Buffer: Receives Raw Packages to filter later
 # Packet Data: Packets that were stored
 # Packet Metrics: Metrics regarding the obtained packets
+import time
 from socket_controller import SocketController
 from packet_inspector import PacketInspector
 class Monitor():
-	def __init__(self,iface,mode):
+	def __init__(self,iface,mode,verbose=False):
 		self.mode = mode
+		self.verbose = verbose
 		self.raw_buffer = []
-		self.packet_data = {}
+		self.packet_data = []
 		self.packet_metrics = {}
 		self.iface = iface
 		self.sc = None
@@ -35,7 +37,7 @@ class Monitor():
 		for key,value in dpacket.items():
 			
 			if type(value) is dict:
-				print(padding+str(key))
+				print(padding+str(key)+":")
 				self.pretty_print(value,padding+incr)
 			else:
 				print(padding+str(key)+": "+str(value))
@@ -49,10 +51,13 @@ class Monitor():
 			raw_packet,address = next(sniffer)
 			# print("Address: ",address)
 			packet = self.inspector.process(raw_packet)
-			if packet is not None:
 
-				self.pretty_print(packet," ","  ")
-				# print("Packet: ",packet)
+			if packet is not None:
+				self.packet_data.append(packet)
+				if self.verbose:
+					print("***************")
+					self.pretty_print(packet," ","  ")
+					# print("Packet: ",packet)
 
 	# Stop Monitoring
 	def stop(self):
