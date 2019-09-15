@@ -7,6 +7,13 @@
 # Raw Buffer: Receives Raw Packages to filter later
 # Packet Data: Packets that were stored
 # Packet Metrics: Metrics regarding the obtained packets
+#
+# metrics:
+#  host:
+#
+#
+
+
 import time
 from socket_controller import SocketController
 from packet_inspector import PacketInspector

@@ -24,15 +24,15 @@ ARP_OP_RE=0x2 # ARP REPLY
 IP_H_LEN=20
 ETH_H_LEN=14
 ARP_H_LEN=28
-
-
-ETH_H_FORMAT = "!6s6sH" # [MAC DST(8B)|MAC SRC(8B)|ETH TYPE/LENGTH(2B)]
-
+UDP_H_LEN=8
+ICMP_H_LEN=8
+TCP_H_LEN=20
+# [MAC DST(8B)|MAC SRC(8B)|ETH TYPE/LENGTH(2B)]
+ETH_H_FORMAT = "!6s6sH"
 ARP_H_FORMAT = "!HHBBH6s4s6s4s"
-
 IP_H_FORMAT = "!BBHHHBBH4s4s"
-
-
+# [SRC PORT(2B)|DST PORT(2B)|LENGTH(2B)|CHECKSUM(2B)]
+UDP_H_FORMAT = "!HHHH" 
 
 
 # Notes: 
@@ -45,11 +45,13 @@ class PacketInspector():
 	def bytes2mac(self,bytesmac):
 		return ":".join("{:02x}".format(x) for x in bytesmac)
 	# Process ICMP Packet
-	def icmp_processing(self,icmp):
+	def icmp_processing(self,rawp):
 		return 0
 	# Process UDP Datagram
 	def udp_processing(self,rawp):
-		return 0
+		udp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+UDP_H_LEN]
+		src,dst,length,checksum = struct.unpack(UDP_H_FORMAT,udp_h)
+		return {'src':src,'dst':dst}
 	# Process TCP Segment
 	def tcp_processing(self,rawp):
 		return 0
@@ -58,9 +60,22 @@ class PacketInspector():
 		ip_h = rawp[ETH_H_LEN:IP_H_LEN+ETH_H_LEN]
 		ver_ihl,tos,total_length,\
 		ip_ident,flag_offset,\
-		ttl,proto,chksm,\
+		ttl,proto,checksum,\
 		src,dst = struct.unpack(IP_H_FORMAT,ip_h)
-		if (ver_ihl & 0xf0) >> 4 == 0x4:
+		
+		# Debug
+		# ver = ver_ihl >> 4
+		# ihl = ver & 0xF
+		# iplen = ihl * 4
+		# print("ver_ihl: ",ver_ihl)
+		# print("Version: ",ver)
+		# print("ihl: ",ihl)
+		# print("iplen: ",iplen)
+		# print("IP Length: ",int(hex(total_length),16))
+		# print("Old IP: ",(ver_ihl & 0xf0) >> 4)
+		# 
+		# if (ver_ihl & 0xf0) >> 4 == 0x4:
+		if ver_ihl >> 4 == 0x4:
 			proto_str = None
 			if proto == 0x1: # 1
 				proto_str = "icmp"
@@ -80,8 +95,7 @@ class PacketInspector():
 	# Process ARP Packet
 	def arp_processing(self,rawp):
 		arp_p = rawp[ETH_H_LEN:ARP_H_LEN+ETH_H_LEN]
-		# hwtype,addrtype,hwlen,protolen,\
-		_,_,_,_,\
+		hwtype,addrtype,hwlen,protolen,\
 		op,srcmac,srcip,tgtmac,tgtip = struct.unpack(ARP_H_FORMAT,arp_p)
 		return {'op':op,\
 		'src':{'mac':self.bytes2mac(srcmac),'ip':socket.inet_ntoa(srcip)},\
@@ -101,11 +115,18 @@ class PacketInspector():
 	# rawp: Raw packet
 	def process(self,rawp):
 		# Parse Ethernet Header
+		# TO DO: offset calculation here! no need to pass all packet
 		packet = {'eth':self.eth_processing(rawp)}
 		if packet['eth']['type'] == "arp":
 			packet['arp'] = self.arp_processing(rawp)
 		elif packet['eth']['type'] == "ip":
 			packet['ip'] =  self.ip_processing(rawp)
+			if packet['ip']['protocol'] == "icmp":
+				pass
+			elif packet['ip']['protocol'] == "tcp":
+				pass
+			elif packet['ip']['protocol'] == "udp":
+				packet['udp'] = self.udp_processing(rawp)
 		else:
 			return None
 		# else : 
