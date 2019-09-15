@@ -1,6 +1,20 @@
 # T2 Lab Redes
 
 
+Test TCP Connection with curl
+```bash
+# Local Host
+curl -vvv 192.168.15.35:3000
+# Remote Host
+curl -vvv https://cloud.fpbin.com
+```
+
+Ethernet
+	|- ARP
+	|- IP
+		|-ICMP
+		|-TCP
+		|-UDP
 
 Ethernet
 

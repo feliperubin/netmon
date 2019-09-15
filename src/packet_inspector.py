@@ -32,12 +32,61 @@ ETH_H_FORMAT = "!6s6sH"
 ARP_H_FORMAT = "!HHBBH6s4s6s4s"
 IP_H_FORMAT = "!BBHHHBBH4s4s"
 # [SRC PORT(2B)|DST PORT(2B)|LENGTH(2B)|CHECKSUM(2B)]
-UDP_H_FORMAT = "!HHHH" 
+UDP_H_FORMAT = "!HHHH"
+TCP_H_FORMAT = "!HH4s4sBBHHH"
 
+# Only Echo Request/Reply
+ICMP_H_FORMAT="!BBHHH"
+# ICMP Generic Format
+# ICMP_H_FORMAT="!BBH4B"
 
 # Notes: 
 # Ethernet Packets: if not ARP or IP will return as None
 #
+
+###########  ICMP Spec #############
+#
+# For More Information,
+# See: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+# Also, For Deprecated Information
+# See: https://tools.ietf.org/html/rfc6918
+
+# ICMP IANA Types:
+# 0	Echo Reply	[RFC792]
+# 3	Destination Unreachable	[RFC792]
+# 5	Redirect	[RFC792]
+# 8	Echo	[RFC792] # Echo Request
+# 9	Router Advertisement	[RFC1256]
+# 10	Router Solicitation	[RFC1256]
+# 11	Time Exceeded	[RFC792]
+# 12	Parameter Problem	[RFC792]
+# 13	Timestamp	[RFC792]
+# 14	Timestamp Reply	[RFC792]
+# 40	Photuris	[RFC2521]
+# 41	ICMP messages utilized by experimental mobility protocols such as Seamoby	[RFC4065]
+# 42	Extended Echo Request	[RFC8335]
+# 43	Extended Echo Reply	[RFC8335]
+# 253	RFC3692-style Experiment 1	[RFC4727]
+# 254	RFC3692-style Experiment 2	[RFC4727]
+
+icmp_iana_t = {'0':{"str": "Echo Reply","rfc":"RFC792"},
+'3':{"str": "Destination Unreachable","rfc":"RFC792"},
+'5':{"str": "Redirect","rfc":"RFC792"},
+'8':{"str": "Echo Request","rfc":"RFC792"},
+'9':{"str": "Router Advertisement","rfc":"RFC1256"},
+'10':{"str": "Router Solicitation","rfc":"RFC1256"},
+'11':{"str": "Time Exceeded","rfc":"RFC792"},
+'12':{"str": "Parameter Problem","rfc":"RFC792"},
+'13':{"str": "Timestamp","rfc":"RFC792"},
+'14':{"str": "Timestamp Reply","rfc":"RFC792"},
+'40':{"str": "Photuris","rfc":"RFC2521"},
+'41':{"str": "ICMP messages utilized by experimental mobility\
+ protocols such as Seamoby","rfc":"RFC4065"},
+'42':{"str": "Extended Echo Request","rfc":"RFC8335"},
+'43':{"str": "Extended Echo Reply","rfc":"RFC8335"},
+'253':{"str": "RFC3692-style Experiment 1","rfc":"RFC4727"},
+'254':{"str": "RFC3692-style Experiment 2","rfc":"RFC4727"}}
+
 class PacketInspector():
 	# def __init__(self):
 
@@ -46,7 +95,29 @@ class PacketInspector():
 		return ":".join("{:02x}".format(x) for x in bytesmac)
 	# Process ICMP Packet
 	def icmp_processing(self,rawp):
-		return 0
+		icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
+		# Note: This only works for ECHO Request/Reply
+		# Otherwise we should read the first 4,
+		# then the others accordingly
+		icmp_t,code,checksum,\
+		icmp_id,icmp_seq = struct.unpack(ICMP_H_FORMAT,icmp_h)
+		payload = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN:]
+		print("ICMP Type: ",icmp_t)
+
+		# if 
+		# 'payload':ascii(payload)}
+		# icmp_iana_t[str(icmp_t)]["str"]
+		# payload = "b'{}".format(''.join('{:02x}'.format(x) for x in payload))
+		# payload = ''.join(x.decode('ascii') for x in payload)
+		# payload = ''.join("b'{:02x}".join(x) for x in payload)
+		# payload = [x for x in payload]
+		if icmp_t == 0x0 or icmp_t == 0x8:
+			return {
+			'type':icmp_iana_t[str(icmp_t)]["str"],
+			'id':int(hex(icmp_id),16),
+			'sequence':int(hex(icmp_seq),16),
+			'payload':ascii(payload)}
+		return {'type':icmp_iana_t[str(icmp_t)]["str"]}
 	# Process UDP Datagram
 	def udp_processing(self,rawp):
 		udp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+UDP_H_LEN]
@@ -54,7 +125,11 @@ class PacketInspector():
 		return {'src':src,'dst':dst}
 	# Process TCP Segment
 	def tcp_processing(self,rawp):
-		return 0
+		tcp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+TCP_H_LEN]
+		src,dst,seq,ack,\
+		hl_r,flags,window,\
+		checksum,urgent = struct.unpack(TCP_H_FORMAT,tcp_h)
+		return {'src':src,'dst':dst}
 	# Process IP Packet
 	def ip_processing(self,rawp):
 		ip_h = rawp[ETH_H_LEN:IP_H_LEN+ETH_H_LEN]
@@ -122,9 +197,9 @@ class PacketInspector():
 		elif packet['eth']['type'] == "ip":
 			packet['ip'] =  self.ip_processing(rawp)
 			if packet['ip']['protocol'] == "icmp":
-				pass
+				packet['icmp'] = self.icmp_processing(rawp)
 			elif packet['ip']['protocol'] == "tcp":
-				pass
+				packet['tcp'] = self.tcp_processing(rawp)
 			elif packet['ip']['protocol'] == "udp":
 				packet['udp'] = self.udp_processing(rawp)
 		else:
