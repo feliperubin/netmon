@@ -101,8 +101,8 @@ class PacketInspector():
 		# then the others accordingly
 		icmp_t,code,checksum,\
 		icmp_id,icmp_seq = struct.unpack(ICMP_H_FORMAT,icmp_h)
-		payload = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN:]
-		print("ICMP Type: ",icmp_t)
+		# payload = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN:]
+		# print("ICMP Type: ",icmp_t)
 
 		# if 
 		# 'payload':ascii(payload)}
@@ -112,11 +112,13 @@ class PacketInspector():
 		# payload = ''.join("b'{:02x}".join(x) for x in payload)
 		# payload = [x for x in payload]
 		if icmp_t == 0x0 or icmp_t == 0x8:
+			payload_raw = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN+8:]
+			payload = struct.unpack("!48s",payload_raw)
 			return {
 			'type':icmp_iana_t[str(icmp_t)]["str"],
 			'id':int(hex(icmp_id),16),
 			'sequence':int(hex(icmp_seq),16),
-			'payload':ascii(payload)}
+			'payload':payload}
 		return {'type':icmp_iana_t[str(icmp_t)]["str"]}
 	# Process UDP Datagram
 	def udp_processing(self,rawp):
