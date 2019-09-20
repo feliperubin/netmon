@@ -12,18 +12,41 @@ import signal
 import sys
 from monitor import Monitor
 
+banner = """
+*********************
+** Network Monitor **
+*********************
+"""
 
+# monitor = None
 # Handles the Signal Interrupt (SIGINT)
 # and then properly exits
 def signal_handler(signal, frame):
-	global metrics
-	print("") # New line 
-	print("Metrics here")
+	# TO DO: Test if amount is > 0
+	print("\n***************\n")  # New line 
+	print("Metrics:")
+	# Amount of packets per protocol
+	# Implementation note: the 6 padding counts '.' as character
+	if monitor.metrics['amount'] > 0:
+		print("Protocol  Amount(%)  Packets")
+		print("tcp        %6.2f      %d" % (100.0 * monitor.metrics['tcp']/monitor.metrics['amount'],monitor.metrics['tcp']))
+		print("udp        %6.2f      %d" % (100.0 * monitor.metrics['udp']/monitor.metrics['amount'],monitor.metrics['udp']))
+		print("arp        %6.2f      %d" % (100.0 * monitor.metrics['arp']/monitor.metrics['amount'],monitor.metrics['arp']))
+		print("icmp       %6.2f      %d" % (100.0 * monitor.metrics['icmp']/monitor.metrics['amount'],monitor.metrics['icmp']))
+		print("-------------------------------")
+		print("Total      100.00     ",monitor.metrics['amount'])
+		print("Size(B): Max: %d  Min: %d"\
+		 % (monitor.metrics['max'],monitor.metrics['min']))
+
+	else:
+		print("No packets were captured!")
+
 	sys.exit(0)
 
 # Usage:
 #   python3 netmon.py -i <iface> -p <port-port> -m <mode> 
 def main():
+	global monitor
 	signal.signal(signal.SIGINT,signal_handler)
 	# try:
 	# 	iface = None
@@ -42,8 +65,10 @@ def main():
 	# 	print("netmon:Unrecognized Parameters\nUsage:\
 	# 		python3 netmon.py -i <iface> -p <port-port> -m <mode>")
 	# 	exit(0)
+	print(banner)
 	monitor = Monitor(iface="eth2",mode=0,verbose=True)
 	monitor.start()
+
 
 
 if __name__ == "__main__":

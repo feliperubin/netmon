@@ -176,7 +176,7 @@ class PacketInspector():
 		op,srcmac,srcip,tgtmac,tgtip = struct.unpack(ARP_H_FORMAT,arp_p)
 		return {'op':op,\
 		'src':{'mac':self.bytes2mac(srcmac),'ip':socket.inet_ntoa(srcip)},\
-		'tgt':{'mac':self.bytes2mac(tgtmac),'ip':socket.inet_ntoa(tgtip)}}
+		'dst':{'mac':self.bytes2mac(tgtmac),'ip':socket.inet_ntoa(tgtip)}}
 	# Process Ethernet Frame
 	def eth_processing(self,rawp):
 		eth_h = rawp[:ETH_H_LEN]
@@ -204,6 +204,8 @@ class PacketInspector():
 				packet['tcp'] = self.tcp_processing(rawp)
 			elif packet['ip']['protocol'] == "udp":
 				packet['udp'] = self.udp_processing(rawp)
+			else:
+				return None
 		else:
 			return None
 		# else : 
