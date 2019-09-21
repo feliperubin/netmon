@@ -17,11 +17,26 @@
 import time
 from socket_controller import SocketController
 from packet_inspector import PacketInspector
+import threading
+import queue
+# Based on: https://www.tutorialspoint.com/python3/python_multithreading.htm
+# class ThSocket (threading.Thread):
+#    def __init__(self, threadID, name,sc):
+#       threading.Thread.__init__(self)
+#       self.threadID = threadID
+#       self.name = name
+#       self.counter = counter
+#    def run(self):
+#       print ("Starting " + self.name)
+#       if operation
+#       print ("Exiting " + self.name)
+
+
 class Monitor():
-	def __init__(self,iface,mode,verbose=False):
+	def __init__(self,iface,mode,verbose=False,use_threads=False):
 		self.mode = mode
 		self.verbose = verbose
-		self.raw_buffer = []
+		# self.raw_buffer = []
 		self.packet_data = []
 		self.metrics = {'amount':0,'tcp':0,'udp':0,\
 		'icmp':0,'arp':0,'bigsend':{},'bigrecv':{},\
@@ -32,6 +47,8 @@ class Monitor():
 		self.sc = None
 		self.on = 0
 		self.inspector = PacketInspector()
+		self.raw_buffer = queue.Queue(maxsize=0)
+		self.use_threads = use_threads
 	# Set Network Interface
 	def set_iface(self,iface):
 		if self.on:
@@ -63,17 +80,36 @@ class Monitor():
 			else:
 				rt+=padding+str(key)+":"+str(value)
 		return "["+rt+"]"
-
+	
+	def start_sniffer(self):
+		while self.on:
+			self.raw_buffer.put(next(sniffer))
+		return 0
 	# Start Monitoring
 	def start(self): # Starts Monitoring
 		self.sc = SocketController(self.iface)
 		self.on = 1
-		sniffer = self.sc.sniffer()
-		while self.on:
-			raw_packet,address = next(sniffer)
-			# print("Address: ",address)
+		# sniffer = self.sc.sniffer()
+		# sniffer = self.sc.th_sniffer(self.q)
+		sniffer = None
+		if self.use_threads:
+			worker = threading.Thread(target=self.sc.th_sniffer,args=(self.raw_buffer,))
+			worker.setDaemon(True)
+			worker.start()
+		else:
+			sniffer = self.sc.sniffer()
 
-			packet = self.inspector.process(raw_packet)
+		# raw_packet,address = None,None
+		while self.on:
+			packet = None
+			if self.use_threads:
+				raw_packet,address = self.raw_buffer.get()
+				packet = self.inspector.process(raw_packet)
+			else:
+				raw_packet,address = next(sniffer)
+				packet = self.inspector.process(raw_packet)
+
+			# packet = self.inspector.process(raw_packet)
 
 			if packet is not None:
 				self.packet_data.append(packet)
@@ -128,7 +164,8 @@ class Monitor():
 					self.pretty_print(packet," ","  ")
 					# print(self.compact_print(packet,"",""))
 					# print("Packet: ",packet)
-
+			else:
+				pass
 	# Stop Monitoring
 	def stop(self):
 		self.on = 0

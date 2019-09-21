@@ -8,11 +8,12 @@ import socket,sys
 import struct
 import os
 import time
-
+import queue
 ETH_P_ALL = 0x0003 # Every Packet
 
 class SocketController:
 	def __init__(self,iface):
+		self.on = False
 		self.__s = None
 		self.__iface = iface
 		try:
@@ -24,6 +25,13 @@ class SocketController:
 		print('Socket created on interface',self.__iface)		
 
 	def sniffer(self): # Packet Sniffer
-		while True:
+		self.on = True
+		while self.on:
 			yield self.__s.recvfrom(65536)
+	
+	def th_sniffer(self,q): # Packet Sniffer Thread
+		self.on = True
+		while self.on:
+			p = self.__s.recvfrom(65536)
+			q.put(p)
 

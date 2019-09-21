@@ -100,7 +100,7 @@ def main():
 	# 	exit(0)
 	print(banner)
 	start_time = time.time()
-	monitor = Monitor(iface="eth2",mode=0,verbose=True)
+	monitor = Monitor(iface="eth2",mode=0,verbose=True,use_threads=True)
 	monitor.start()
 
 
