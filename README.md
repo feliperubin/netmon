@@ -20,7 +20,6 @@ Ethernet
 
 
 **Python Stuff**
-
 **Format**
 
 IEEE 754 

@@ -37,7 +37,20 @@ def signal_handler(signal, frame):
 		print("Total      100.00     ",monitor.metrics['amount'])
 		print("Size(B): Max: %d  Min: %d"\
 		 % (monitor.metrics['max'],monitor.metrics['min']))
+		print("-------------------------------")
 
+		# Lambda Function to select value from dict item
+		byvalue = lambda x: x[1]
+		# Top 5 Big Senders
+		bigsend = sorted(monitor.metrics['bigsend'].items(), key=byvalue, reverse=True)[:5]
+		# Top 5 Big Receivers
+		bigrecv = sorted(monitor.metrics['bigrecv'].items(), key=byvalue, reverse=True)[:5]
+		
+		print("Top    Senders       Packets")
+		[print("%d    %-15s    %d" % (i+1,bigsend[i][0],bigsend[i][1])) for i in range(0,len(bigsend))]
+		print("\nTop    Receivers     Packets")
+		[print("%d    %-15s    %d" % (i+1,bigrecv[i][0],bigrecv[i][1])) for i in range(0,len(bigrecv))]
+		
 	else:
 		print("No packets were captured!")
 

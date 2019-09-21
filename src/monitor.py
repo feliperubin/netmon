@@ -61,7 +61,6 @@ class Monitor():
 			# print("Address: ",address)
 
 			packet = self.inspector.process(raw_packet)
-			print("Random stuff: ",address)
 
 			if packet is not None:
 				self.packet_data.append(packet)
