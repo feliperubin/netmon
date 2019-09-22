@@ -50,25 +50,6 @@ ICMP_H_FORMAT="!BBHHH"
 # See: https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
 # Also, For Deprecated Information
 # See: https://tools.ietf.org/html/rfc6918
-
-# ICMP IANA Types:
-# 0	Echo Reply	[RFC792]
-# 3	Destination Unreachable	[RFC792]
-# 5	Redirect	[RFC792]
-# 8	Echo	[RFC792] # Echo Request
-# 9	Router Advertisement	[RFC1256]
-# 10	Router Solicitation	[RFC1256]
-# 11	Time Exceeded	[RFC792]
-# 12	Parameter Problem	[RFC792]
-# 13	Timestamp	[RFC792]
-# 14	Timestamp Reply	[RFC792]
-# 40	Photuris	[RFC2521]
-# 41	ICMP messages utilized by experimental mobility protocols such as Seamoby	[RFC4065]
-# 42	Extended Echo Request	[RFC8335]
-# 43	Extended Echo Reply	[RFC8335]
-# 253	RFC3692-style Experiment 1	[RFC4727]
-# 254	RFC3692-style Experiment 2	[RFC4727]
-
 icmp_iana_t = {'0':{"str": "Echo Reply","rfc":"RFC792"},
 '3':{"str": "Destination Unreachable","rfc":"RFC792"},
 '5':{"str": "Redirect","rfc":"RFC792"},
@@ -101,16 +82,7 @@ class PacketInspector():
 		# then the others accordingly
 		icmp_t,code,checksum,\
 		icmp_id,icmp_seq = struct.unpack(ICMP_H_FORMAT,icmp_h)
-		# payload = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN:]
-		# print("ICMP Type: ",icmp_t)
-
-		# if 
-		# 'payload':ascii(payload)}
-		# icmp_iana_t[str(icmp_t)]["str"]
-		# payload = "b'{}".format(''.join('{:02x}'.format(x) for x in payload))
-		# payload = ''.join(x.decode('ascii') for x in payload)
-		# payload = ''.join("b'{:02x}".join(x) for x in payload)
-		# payload = [x for x in payload]
+		
 		if icmp_t == 0x0 or icmp_t == 0x8:
 			payload_raw = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN+8:]
 			payload = struct.unpack("!48s",payload_raw)
@@ -140,18 +112,7 @@ class PacketInspector():
 		ttl,proto,checksum,\
 		src,dst = struct.unpack(IP_H_FORMAT,ip_h)
 		
-		# Debug
-		# ver = ver_ihl >> 4
-		# ihl = ver & 0xF
-		# iplen = ihl * 4
-		# print("ver_ihl: ",ver_ihl)
-		# print("Version: ",ver)
-		# print("ihl: ",ihl)
-		# print("iplen: ",iplen)
-		# print("IP Length: ",int(hex(total_length),16))
-		# print("Old IP: ",(ver_ihl & 0xf0) >> 4)
-		# 
-		# if (ver_ihl & 0xf0) >> 4 == 0x4:
+		# Check if version 4
 		if ver_ihl >> 4 == 0x4:
 			proto_str = None
 			if proto == 0x1: # 1
@@ -211,27 +172,5 @@ class PacketInspector():
 		# else : 
 		# 	print("Packet Type Unknown",packet['eth']['type'])
 		return packet
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

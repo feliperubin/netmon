@@ -1,6 +1,17 @@
 # T2 Lab Redes
 
 
+**Docker Execution**
+
+```bash
+# Build the container
+docker build . -t netmon
+# Run it
+sudo docker run --rm -it -v $PWD/src:/src --privileged --network host netmon
+```
+
+
+
 Test TCP Connection with curl
 ```bash
 # Local Host

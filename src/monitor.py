@@ -19,18 +19,6 @@ from socket_controller import SocketController
 from packet_inspector import PacketInspector
 import threading
 import queue
-# Based on: https://www.tutorialspoint.com/python3/python_multithreading.htm
-# class ThSocket (threading.Thread):
-#    def __init__(self, threadID, name,sc):
-#       threading.Thread.__init__(self)
-#       self.threadID = threadID
-#       self.name = name
-#       self.counter = counter
-#    def run(self):
-#       print ("Starting " + self.name)
-#       if operation
-#       print ("Exiting " + self.name)
-
 
 class Monitor():
 	def __init__(self,iface,mode,verbose=False,use_threads=False):
@@ -85,8 +73,15 @@ class Monitor():
 		while self.on:
 			self.raw_buffer.put(next(sniffer))
 		return 0
+	
+	# True if it's on, False otherwise.
+	def status(self):
+
+		return self.on == 1 or self._start_on == 1
+
 	# Start Monitoring
 	def start(self): # Starts Monitoring
+		self._start_on = 1
 		self.sc = SocketController(self.iface)
 		self.on = 1
 		# sniffer = self.sc.sniffer()
@@ -100,6 +95,7 @@ class Monitor():
 			sniffer = self.sc.sniffer()
 
 		# raw_packet,address = None,None
+
 		while self.on:
 			packet = None
 			if self.use_threads:
@@ -166,13 +162,14 @@ class Monitor():
 					# print("Packet: ",packet)
 			else:
 				pass
+		self._start_on = 0
+		self.sc = None
+		print("Not on anymore!")
+	
 	# Stop Monitoring
 	def stop(self):
 		self.on = 0
-		self.sc = None
 		return 0
-
-
 
 
 

@@ -6,6 +6,9 @@
 # About: Network Monitor for 
 # PUCRS 2019/2 Course Computer Networks Lab
 
+# Python has bugs...
+# https://grokbase.com/t/python/python-bugs-list/
+# 155s7p1fmf/issue24283-print-not-safe-in-signal-handlers
 
 # https://stackoverflow.com/questions/1112343/how-do-i-capture-sigint-in-python
 import signal
@@ -22,7 +25,13 @@ banner = """
 # monitor = None
 # Handles the Signal Interrupt (SIGINT)
 # and then properly exits
-def signal_handler(signal, frame):
+# def signal_handler(signal, frame):
+def signal_handler():
+	# monitor.stop()
+
+	# while monitor.status():
+	# 	continue
+
 	b_repr = lambda x: str(x)+'B' if x < 1000 else kb_repr(x/1000)
 	kb_repr = lambda x: str(x)+'KB' if x < 1000 else mb_repr(x/1000)
 	mb_repr = lambda x: str(x)+'MB' if x < 1000 else gb_repr(x/1000)
@@ -80,7 +89,7 @@ def main():
 	global monitor
 	# start_time = 0
 	global start_time
-	signal.signal(signal.SIGINT,signal_handler)
+	# signal.signal(signal.SIGINT,signal_handler)
 	# try:
 	# 	iface = None
 	# 	ports = (None,None)
@@ -100,8 +109,17 @@ def main():
 	# 	exit(0)
 	print(banner)
 	start_time = time.time()
-	monitor = Monitor(iface="eth2",mode=0,verbose=True,use_threads=True)
-	monitor.start()
+	monitor = Monitor(iface="eth0",mode=0,verbose=True,use_threads=False)
+	
+	try:
+		monitor.start()
+	except:
+		signal_handler()
+		exit(0)
+	# try:
+
+	# except:
+	# 	pass
 
 
 if __name__ == "__main__":
