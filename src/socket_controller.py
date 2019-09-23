@@ -43,10 +43,14 @@ class SocketController:
 
 
 		# Get Device MAC Address
-		self.mac = utils.bytes2mac(self.__s.getsockname()[4])
 		
+		self.__mac = self.__s.getsockname()[4]
 		# Get Device IP Address
-		self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
+		self.__ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
+
+		
+		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
+		# self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
 
 	def sniffer(self): # Packet Sniffer
 		self.on = True
@@ -58,6 +62,20 @@ class SocketController:
 		while self.on:
 			p = self.__s.recvfrom(65536)
 			q.put(p)
+
+	def checksum(msg):
+		s = 0
+		for i in range(0, len(msg), 2):
+			a = msg[i]
+			b = msg[i+1]
+			s = s + (a+(b << 8))
+		s = s + (s >> 16)
+		s = ~s + 0xffff
+		return socket.ntohs(s)
+	
+	# Sends a network packet
+	def send_packet(self,packet):
+		return 0
 
 
 # socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
