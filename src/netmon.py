@@ -111,7 +111,7 @@ def main():
 
 	print(banner)
 	start_time = time.time()
-	monitor = Monitor(iface="eth2",mode=1,verbose=True,use_threads=True)
+	monitor = Monitor(iface="eth2",mode=1,verbose=True,use_threads=False)
 	
 	try:
 		monitor.start()
