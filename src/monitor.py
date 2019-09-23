@@ -84,8 +84,6 @@ class Monitor():
 		self._start_on = 1
 		self.sc = SocketController(self.iface)
 		self.on = 1
-		# sniffer = self.sc.sniffer()
-		# sniffer = self.sc.th_sniffer(self.q)
 		sniffer = None
 		if self.use_threads:
 			worker = threading.Thread(target=self.sc.th_sniffer,args=(self.raw_buffer,))

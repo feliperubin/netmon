@@ -1,9 +1,9 @@
 #
 #
-# Network Probe
+# Network Scanner
 #
 #
-class Probe():
+class Scanner():
 	def __init__(self,iface,verbose=False,use_threads=False):
 		self.iface = iface
 		self.on = False

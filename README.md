@@ -10,6 +10,8 @@ docker build . -t netmon
 sudo docker run --rm -it -v $PWD/src:/src --privileged --network host netmon
 ```
 
+SIGINT(2)
+SIGKILL(9)
 
 
 Test TCP Connection with curl
