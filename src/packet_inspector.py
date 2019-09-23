@@ -6,6 +6,7 @@
 #
 import struct
 import socket
+import utils
 # Information From
 # /usr/include/linux/if_ether.h
 
@@ -71,9 +72,6 @@ icmp_iana_t = {'0':{"str": "Echo Reply","rfc":"RFC792"},
 class PacketInspector():
 	# def __init__(self):
 
-	# Convert Mac Address format from Bytes to Hex
-	def bytes2mac(self,bytesmac):
-		return ":".join("{:02x}".format(x) for x in bytesmac)
 	# Process ICMP Packet
 	def icmp_processing(self,rawp):
 		icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
@@ -136,8 +134,8 @@ class PacketInspector():
 		hwtype,addrtype,hwlen,protolen,\
 		op,srcmac,srcip,tgtmac,tgtip = struct.unpack(ARP_H_FORMAT,arp_p)
 		return {'op':op,\
-		'src':{'mac':self.bytes2mac(srcmac),'ip':socket.inet_ntoa(srcip)},\
-		'dst':{'mac':self.bytes2mac(tgtmac),'ip':socket.inet_ntoa(tgtip)}}
+		'src':{'mac':utils.bytes2mac(srcmac),'ip':socket.inet_ntoa(srcip)},\
+		'dst':{'mac':utils.bytes2mac(tgtmac),'ip':socket.inet_ntoa(tgtip)}}
 	# Process Ethernet Frame
 	def eth_processing(self,rawp):
 		eth_h = rawp[:ETH_H_LEN]
@@ -147,7 +145,7 @@ class PacketInspector():
 			eth_t_str = "arp"
 		elif eth_t == ETH_P_IP:
 			eth_t_str = "ip"
-		return {'dst':self.bytes2mac(dst),'src':self.bytes2mac(src),'type':eth_t_str}
+		return {'dst':utils.bytes2mac(dst),'src':utils.bytes2mac(src),'type':eth_t_str}
 
 	# Processes a packet, returns None if unecessary
 	# rawp: Raw packet

@@ -9,6 +9,7 @@ import struct
 import os
 import time
 import queue
+import utils
 ETH_P_ALL = 0x0003 # Every Packet
 
 class SocketController:
@@ -22,7 +23,8 @@ class SocketController:
 		    print('Error'+str(msg))
 		    sys.exit(1)
 		self.__s.bind((self.__iface,0))
-		print('Socket created on interface',self.__iface)		
+		print('Socket created on interface',self.__iface)	
+		self.mac = self.__s.getsockname()[4]
 
 	def sniffer(self): # Packet Sniffer
 		self.on = True
@@ -34,4 +36,21 @@ class SocketController:
 		while self.on:
 			p = self.__s.recvfrom(65536)
 			q.put(p)
+
+
+# socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
+# Translate the host/port argument into a sequence of 5-tuples that contain all the necessary arguments for creating a socket connected to that service. host is a domain name, a string representation of an IPv4/v6 address or None. port is a string service name such as 'http', a numeric port number or None. By passing None as the value of host and port, you can pass NULL to the underlying C API.
+# Convert an IPv4 address from dotted-quad string format (for example, ‘123.45.67.89’) to 32-bit packed binary format,
+# socket.inet_aton
+
+
+
+
+
+
+
+
+
+
+
 

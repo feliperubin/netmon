@@ -32,10 +32,10 @@ def signal_handler():
 	# while monitor.status():
 	# 	continue
 
-	b_repr = lambda x: str(x)+'B' if x < 1000 else kb_repr(x/1000)
-	kb_repr = lambda x: str(x)+'KB' if x < 1000 else mb_repr(x/1000)
-	mb_repr = lambda x: str(x)+'MB' if x < 1000 else gb_repr(x/1000)
-	gb_repr = lambda x: str(x)+'GB'
+	b_repr = lambda x: str(round(x,2))+'B' if x < 1000 else kb_repr(x/1000)
+	kb_repr = lambda x: str(round(x,2))+'KB' if x < 1000 else mb_repr(x/1000)
+	mb_repr = lambda x: str(round(x,2))+'MB' if x < 1000 else gb_repr(x/1000)
+	gb_repr = lambda x: str(round(x,2))+'GB'
 	# TO DO: Test if amount is > 0
 	stop_time = time.time()
 	print("\n***************\n")  # New line 
@@ -44,12 +44,12 @@ def signal_handler():
 	# Implementation note: the 6 padding counts '.' as character
 	if monitor.metrics['amount'] > 0:
 		print("Protocol  Amount(%)  Packets")
-		print("tcp        %6.2f      %d" % (100.0 * monitor.metrics['tcp']/monitor.metrics['amount'],monitor.metrics['tcp']))
-		print("udp        %6.2f      %d" % (100.0 * monitor.metrics['udp']/monitor.metrics['amount'],monitor.metrics['udp']))
-		print("arp        %6.2f      %d" % (100.0 * monitor.metrics['arp']/monitor.metrics['amount'],monitor.metrics['arp']))
-		print("icmp       %6.2f      %d" % (100.0 * monitor.metrics['icmp']/monitor.metrics['amount'],monitor.metrics['icmp']))
+		print("tcp        %6.2f     %d" % (100.0 * monitor.metrics['tcp']/monitor.metrics['amount'],monitor.metrics['tcp']))
+		print("udp        %6.2f     %d" % (100.0 * monitor.metrics['udp']/monitor.metrics['amount'],monitor.metrics['udp']))
+		print("arp        %6.2f     %d" % (100.0 * monitor.metrics['arp']/monitor.metrics['amount'],monitor.metrics['arp']))
+		print("icmp       %6.2f     %d" % (100.0 * monitor.metrics['icmp']/monitor.metrics['amount'],monitor.metrics['icmp']))
 		print("--------------------------------------------")
-		print("Total      100.00     ",monitor.metrics['amount'])
+		print("Total      100.00     %d" % (monitor.metrics['amount']))
 		print("Size: Max: %s  Min: %s"\
 		 % (b_repr(monitor.metrics['max']),b_repr(monitor.metrics['min'])))
 		print("--------------------------------------------")
@@ -107,19 +107,16 @@ def main():
 	# 	print("netmon:Unrecognized Parameters\nUsage:\
 	# 		python3 netmon.py -i <iface> -p <port-port> -m <mode>")
 	# 	exit(0)
+
+
 	print(banner)
 	start_time = time.time()
 	monitor = Monitor(iface="eth0",mode=0,verbose=True,use_threads=False)
 	
 	try:
 		monitor.start()
-	except:
+	except KeyboardInterrupt:
 		signal_handler()
-		exit(0)
-	# try:
-
-	# except:
-	# 	pass
 
 
 if __name__ == "__main__":
