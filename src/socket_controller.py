@@ -63,18 +63,10 @@ class SocketController:
 			p = self.__s.recvfrom(65536)
 			q.put(p)
 
-	def checksum(msg):
-		s = 0
-		for i in range(0, len(msg), 2):
-			a = msg[i]
-			b = msg[i+1]
-			s = s + (a+(b << 8))
-		s = s + (s >> 16)
-		s = ~s + 0xffff
-		return socket.ntohs(s)
 	
 	# Sends a network packet
 	def send_packet(self,packet):
+		self.__s.send(packet)
 		return 0
 
 

@@ -21,7 +21,7 @@ import threading
 import queue
 
 class Monitor():
-	def __init__(self,iface,mode,verbose=False,use_threads=False):
+	def __init__(self,iface,mode=0,verbose=False,use_threads=False):
 		self.mode = mode
 		self.verbose = verbose
 		# self.raw_buffer = []
