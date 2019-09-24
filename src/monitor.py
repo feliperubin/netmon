@@ -37,6 +37,7 @@ class Monitor():
 		self.inspector = PacketInspector()
 		self.raw_buffer = queue.Queue(maxsize=0)
 		self.use_threads = use_threads
+		
 	# Set Network Interface
 	def set_iface(self,iface):
 		if self.on:

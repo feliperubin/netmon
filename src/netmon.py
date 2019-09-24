@@ -14,6 +14,7 @@
 import signal
 import sys
 from monitor import Monitor
+from scanner import Scanner
 import time
 
 banner = """
@@ -99,7 +100,6 @@ def passive():
 
 def active():
 	
-
 	scanner = Scanner(iface=params['iface'],
 		net=params['net'],\
 		cidr=params['cidr'],\

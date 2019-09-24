@@ -44,9 +44,9 @@ class SocketController:
 
 		# Get Device MAC Address
 		
-		self.__mac = self.__s.getsockname()[4]
+		self.mac = self.__s.getsockname()[4]
 		# Get Device IP Address
-		self.__ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
+		self.ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
 
 		
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
@@ -65,8 +65,10 @@ class SocketController:
 
 	
 	# Sends a network packet
-	def send_packet(self,packet):
-		self.__s.send(packet)
+	# Send data to the socket. The socket must be connected to a remote socket
+	def send(self,packet):
+		x = self.__s.send(packet)
+		print(x)
 		return 0
 
 

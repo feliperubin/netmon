@@ -28,12 +28,14 @@ Vagrant.configure("2") do |config|
 
   config.ssh.forward_x11 = true #Enables X11
 
-  config.vm.network "private_network", type: "dhcp"
+  # config.vm.network "private_network", type: "dhcp"
   # Either wireless, or Thunderbolt Ethernet
-  config.vm.network "public_network", bridge: [
-  "en0",
-  "bridge0"
-  ]
+  # config.vm.network "public_network", bridge: [
+  # "en0",
+  # "en4"
+  # ],type: "dhcp"
+  config.vm.network "public_network"
+
 
   config.vm.provider :parallels do |v, override|
       # override.vm.box = "bento/ubuntu-16.04"
