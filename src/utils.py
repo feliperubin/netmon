@@ -22,19 +22,12 @@ def checksum(msg):
 # return: array with 4 octets [255,255,255,255]
 def cidr2mask(cidr):
 	bits = (cidr*'1')+('0'*(32 - cidr))
-
 	return [
 		int(bits[0:8],2),
 		int(bits[8:16],2),
 		int(bits[16:24],2),
 		int(bits[24:32],2),
 	]
-	# return [
-	# 	255 >> (8-cidr)*(cidr<8),
-	# 	255 >> (16-cidr)*(cidr<16),
-	# 	255 >> (24-cidr)*(cidr<24),
-	# 	255 >> (32-cidr)*(cidr<32)
-	# ]
 
 
 

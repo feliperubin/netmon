@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
   # "en0",
   # "en4"
   # ],type: "dhcp"
-  config.vm.network "public_network"
+  config.vm.network "public_network",gateway: "192.168.15.10"
 
 
   config.vm.provider :parallels do |v, override|

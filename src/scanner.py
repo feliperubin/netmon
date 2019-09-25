@@ -93,7 +93,7 @@ class Scanner():
 		for i in range(0,3):
 			try:
 				self.sc.send(arp_req_packet)
-				sniffer = self.sc.sniffer(timeout=0.5)
+				sniffer = self.sc.sniffer(timeout=0.1)
 				raw_packet,address = next(sniffer)
 				packet = self.inspector.process(raw_packet)
 
@@ -103,7 +103,6 @@ class Scanner():
 						packet['arp']['dst']['mac'] == utils.bytes2mac(self.sc.mac):
 							return packet['arp']['src']['mac']
 			except socket.timeout:
-			# print('Timeout')
 				pass
 		return None
 
@@ -118,13 +117,10 @@ class Scanner():
 			if x & z != y:
 				return False
 		return True
-	# Begin Network Discovery
-	def start(self):
-		print("Same Network: ",self.same_network())
-		# self.send_arp("192.168.15.153")
-		self.on = True
-		# start_ip = [x&y for x,y in zip(self.netaddr,utils.cidr2mask(cidr)
 
+	# Send arp request for each ip address on the network
+	# when an arp reply is received, insert the ip:mac on the arp cache.
+	def arp_discovery(self):
 		for b0 in range(self.netaddr[0],self.netaddr[0]+256-self.netmask[0]):
 			for b1 in range(self.netaddr[1],self.netaddr[1]+256-self.netmask[1]):
 				for b2 in range(self.netaddr[2],self.netaddr[2]+256-self.netmask[2]):
@@ -134,47 +130,29 @@ class Scanner():
 						for i in range(0,2):
 							host_mac = self.send_arp_wait(host_ip)
 							if host_mac is not None:
-								# print("Host %d.%d.%d.%d (%s)" % (b0,b1,b2,b3,host_mac))
+								print("Host %d.%d.%d.%d (%s)" % (b0,b1,b2,b3,host_mac))
 								self.cache[host_ip] = host_mac
+								break;
+
+	# Begin Network Discovery
+	def start(self):
+		# print("Scanning Network %s.%s.%s.%s netmask %s.%s.%s.%s" % (self.netaddr,self.netmask))
+
+		if self.same_network():
+			print("Same Network")
+			self.arp_discovery()
+			
+		else:
+			print("Different Network")
+		print("Same Network: ",self.same_network())
+		# self.send_arp("192.168.15.153")
+		self.on = True
+		# start_ip = [x&y for x,y in zip(self.netaddr,utils.cidr2mask(cidr)
+
 		print('Final Cache:')
 		for i in self.cache:
 			print("Host %s (%s)" % (i,self.cache[i]))
 		return 0
-
-
-
-# /*Test if inet2 ip is on the same subnet of inet1*/
-# // int same_subnet(struct inet inet1, struct inet inet2)
-# int same_subnet(struct inet inet1, uint32_t ip2)
-# {
-# 	uint32_t first_addr=inet1.ip&(0xFFFFFFFF << (32 - inet1.prefix));
-# 	uint32_t last_addr=first_addr|(0xFFFFFFFF >> (inet1.prefix));
-# 	return ip2 >= first_addr && ip2 <= last_addr;
-# }
-
-
-# for b3 in range(ip[3],mask[3]):
-# 	for b2 in range(ip[2],mask[2]):
-# 		for b1 in range(ip[1],mask[1]):
-# 			for b0 in range(ip[0],mask[0]):
-# 				host = struct.pack("!BBBB",b3,b2,b1,b0)
-
-
-# mask = [0,0,0,0]
-# octet = self.cidr
-# for i in range(0,4):
-# 	mask[i] = 255
-# 	if octet < 8:
-# 		mask[i] = mask[i] >> (8-octet)
-# 		break
-# 	octet-=8		
-
-# for b0 in range(self.netaddr[0],self.netaddr[0]+256-self.netmask[0]):
-# 	for b1 in range(self.netaddr[1],self.netaddr[1]+256-self.netmask[1]):
-# 		for b2 in range(self.netaddr[2],self.netaddr[2]+256-self.netmask[2]):
-# 			for b3 in range(self.netaddr[3],self.netaddr[3]+256-self.netmask[3]):
-# 				host = struct.pack("!BBBB",b0,b1,b2,b3)
-# 				print("IP: %d.%d.%d.%d" % (b0,b1,b2,b3))
 
 
 

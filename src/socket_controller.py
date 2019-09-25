@@ -15,7 +15,7 @@ ETH_P_ALL = 0x0003 # Every Packet
 
 # See netdevice(7)
 SIOCGIFADDR=0x8915 # Get/Set a device's address.
-
+#http://man7.org/linux/man-pages/man7/netdevice.7.html
 
 # Get IP Address of Interface
 # Based on:
@@ -24,7 +24,11 @@ SIOCGIFADDR=0x8915 # Get/Set a device's address.
 # /usr/include/linux/ioctl.h
 # /usr/include/asm-generic/ioctl.h
 
+# ip - Linux IPv4 protocol implementation
+# https://linux.die.net/man/7/ip
 
+# Obtain Routes
+# cat /proc/net/route
 import fcntl
 
 
@@ -47,6 +51,11 @@ class SocketController:
 		self.mac = self.__s.getsockname()[4]
 		# Get Device IP Address
 		self.ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
+
+		# Get Broadcast Address
+		# SIOCSIFHWBROADCAST SIOCSIFBRDADDR
+
+		# Get  
 
 		
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
