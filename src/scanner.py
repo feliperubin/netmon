@@ -5,6 +5,7 @@
 #
 from socket_controller import SocketController
 from packet_inspector import PacketInspector
+from packet_creator import PacketCreator
 import threading
 import queue
 import struct 
@@ -20,6 +21,7 @@ class Scanner():
 		self.on = False
 		self.sc = SocketController(self.iface)
 		self.inspector = PacketInspector()
+		self.creator = PacketCreator()
 		# List of packets to wait. 
 		# Ex: Send arp request, wait arp reply
 		self.waiting_packet = {}
@@ -39,57 +41,12 @@ class Scanner():
 
 
 
-	# Sends ARP Request Packet
-	def send_arp(self,dst_ip):
-		
-		# MAC Origem - 6 bytes
-		# source_mac = b"\xa4\x1f\x72\xf5\x90\x41"
-		protocol = 0x0806
-		# Header Ethernet
-		# MAC Destino - 6 bytes
-		dst_mac = b"\xff\xff\xff\xff\xff\xff"
-		eth_hdr = struct.pack("!6s6sH", dst_mac, self.sc.mac, protocol)
+	# Sends ARP Request Packet and Wait an answer until a chosen timeout
+	def send_arp_wait(self,ip_dst):
 
-		# Header ARP
-		htype = 0x1
-		ptype = 0x0800
-		hlen = 0x6
-		plen = 0x4
-		op = 0x1 # request
-		dst_mac = b"\x00\x00\x00\x00\x00\x00"
-		arp_hdr = struct.pack("!HHBBH6s4s6s4s", htype, ptype,\
-		 hlen, plen, op, self.sc.mac, self.sc.ip, dst_mac,socket.inet_aton(dst_ip))
+		arp_req_packet = self.creator.arp_request(self.sc.ip,self.sc.mac,ip_dst)
 
-		packet = eth_hdr+arp_hdr		
-		self.sc.send(packet)
-
-	def send_arp_wait(self,dst_ip):
-		
-		# MAC Origem - 6 bytes
-		# source_mac = b"\xa4\x1f\x72\xf5\x90\x41"
-		protocol = 0x0806
-		# Header Ethernet
-		# MAC Destino - 6 bytes
-		dst_mac = b"\xff\xff\xff\xff\xff\xff"
-		eth_hdr = struct.pack("!6s6sH", dst_mac, self.sc.mac, protocol)
-
-		# Header ARP
-		htype = 0x1
-		ptype = 0x0800
-		hlen = 0x6
-		plen = 0x4
-		op = 0x1 # request
-		dst_mac = b"\x00\x00\x00\x00\x00\x00"
-		arp_hdr = struct.pack("!HHBBH6s4s6s4s", htype, ptype,\
-		 hlen, plen, op, self.sc.mac, self.sc.ip, dst_mac,socket.inet_aton(dst_ip))
-
-		arp_req_packet = eth_hdr+arp_hdr		
-		
-		
-		# for i in range(0,3):
-
-		# This have a max time, if there's no answer or traffic it will stop.
-		
+		# This have a max time, if there's no answer or traffic it will stop.		
 		for i in range(0,3):
 			try:
 				self.sc.send(arp_req_packet)
@@ -99,16 +56,18 @@ class Scanner():
 
 				if packet is not None:
 					if packet['eth']['type'] == 'arp':
-						if packet['arp']['src']['ip'] == dst_ip and \
+						if packet['arp']['src']['ip'] == ip_dst and \
 						packet['arp']['dst']['mac'] == utils.bytes2mac(self.sc.mac):
 							return packet['arp']['src']['mac']
 			except socket.timeout:
 				pass
 		return None
 
+	def send_icmp_wait(self,ip_dst):
+		return 0
 
 
-	def send_icmp(self,dst_ip,dst_mac):
+	def send_icmp(self,ip_dst,dst_mac):
 		return 0
 	
 	def same_network(self):
@@ -133,6 +92,9 @@ class Scanner():
 								print("Host %d.%d.%d.%d (%s)" % (b0,b1,b2,b3,host_mac))
 								self.cache[host_ip] = host_mac
 								break;
+
+	def icmp_discovery(self):
+		return 0
 
 	# Begin Network Discovery
 	def start(self):

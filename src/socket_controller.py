@@ -78,8 +78,7 @@ class SocketController:
 	# Sends a network packet
 	# Send data to the socket. The socket must be connected to a remote socket
 	def send(self,packet):
-		x = self.__s.send(packet)
-		return 0
+		self.__s.send(packet)
 
 
 # socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
