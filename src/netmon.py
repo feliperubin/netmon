@@ -101,7 +101,7 @@ def passive():
 def active():
 	
 	scanner = Scanner(iface=params['iface'],
-		net=params['net'],\
+		netaddr=params['net'],\
 		cidr=params['cidr'],\
 		ports=params['ports'],\
 		verbose=True,use_threads=False)
@@ -170,8 +170,8 @@ def main():
 			exit(0)
 		elif sys.argv[i] == "-n": # Either host/cidr or network/cidr
 			tgt = sys.argv[i+1].split("/")
-			params['net'] = tgt[0]
-			params['cidr'] = tgt[1]
+			params['net'] = [int(x) for x in tgt[0].split('.')]
+			params['cidr'] = int(tgt[1])
 			i+=1
 
 	# except Exception e:
