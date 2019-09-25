@@ -10,11 +10,16 @@ import queue
 import struct 
 import socket
 import utils
+
+
+# To stop waiting a packet that will never arrive.
+
 class Scanner():
 	def __init__(self,iface,netaddr,cidr,ports,verbose=False,use_threads=False):
 		self.iface = iface
 		self.on = False
 		self.sc = SocketController(self.iface)
+		self.inspector = PacketInspector()
 		# List of packets to wait. 
 		# Ex: Send arp request, wait arp reply
 		self.waiting_packet = {}
@@ -57,7 +62,53 @@ class Scanner():
 
 		packet = eth_hdr+arp_hdr		
 		self.sc.send(packet)
+
+	def send_arp_wait(self,dst_ip):
 		
+		# MAC Origem - 6 bytes
+		# source_mac = b"\xa4\x1f\x72\xf5\x90\x41"
+		protocol = 0x0806
+		# Header Ethernet
+		# MAC Destino - 6 bytes
+		dst_mac = b"\xff\xff\xff\xff\xff\xff"
+		eth_hdr = struct.pack("!6s6sH", dst_mac, self.sc.mac, protocol)
+
+		# Header ARP
+		htype = 0x1
+		ptype = 0x0800
+		hlen = 0x6
+		plen = 0x4
+		op = 0x1 # request
+		dst_mac = b"\x00\x00\x00\x00\x00\x00"
+		arp_hdr = struct.pack("!HHBBH6s4s6s4s", htype, ptype,\
+		 hlen, plen, op, self.sc.mac, self.sc.ip, dst_mac,socket.inet_aton(dst_ip))
+
+		arp_req_packet = eth_hdr+arp_hdr		
+		
+		
+		# for i in range(0,3):
+
+		# This have a max time, if there's no answer or traffic it will stop.
+		
+		for i in range(0,3):
+			try:
+				self.sc.send(arp_req_packet)
+				sniffer = self.sc.sniffer(timeout=0.5)
+				raw_packet,address = next(sniffer)
+				packet = self.inspector.process(raw_packet)
+
+				if packet is not None:
+					if packet['eth']['type'] == 'arp':
+						if packet['arp']['src']['ip'] == dst_ip and \
+						packet['arp']['dst']['mac'] == utils.bytes2mac(self.sc.mac):
+							return packet['arp']['src']['mac']
+			except socket.timeout:
+			# print('Timeout')
+				pass
+		return None
+
+
+
 	def send_icmp(self,dst_ip,dst_mac):
 		return 0
 	
@@ -78,8 +129,16 @@ class Scanner():
 			for b1 in range(self.netaddr[1],self.netaddr[1]+256-self.netmask[1]):
 				for b2 in range(self.netaddr[2],self.netaddr[2]+256-self.netmask[2]):
 					for b3 in range(self.netaddr[3],self.netaddr[3]+256-self.netmask[3]):
-						host = struct.pack("!BBBB",b0,b1,b2,b3)
-						print("IP: %d.%d.%d.%d" % (b0,b1,b2,b3))
+						# host = struct.pack("!BBBB",b0,b1,b2,b3)
+						host_ip = str(b0)+'.'+str(b1)+'.'+str(b2)+'.'+str(b3)
+						for i in range(0,2):
+							host_mac = self.send_arp_wait(host_ip)
+							if host_mac is not None:
+								# print("Host %d.%d.%d.%d (%s)" % (b0,b1,b2,b3,host_mac))
+								self.cache[host_ip] = host_mac
+		print('Final Cache:')
+		for i in self.cache:
+			print("Host %s (%s)" % (i,self.cache[i]))
 		return 0
 
 

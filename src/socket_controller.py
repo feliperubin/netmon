@@ -52,7 +52,9 @@ class SocketController:
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
 		# self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
 
-	def sniffer(self): # Packet Sniffer
+	def sniffer(self,timeout=None): # Packet Sniffer
+		if timeout is not None:
+			self.__s.settimeout(timeout)
 		self.on = True
 		while self.on:
 			yield self.__s.recvfrom(65536)
@@ -68,7 +70,6 @@ class SocketController:
 	# Send data to the socket. The socket must be connected to a remote socket
 	def send(self,packet):
 		x = self.__s.send(packet)
-		print(x)
 		return 0
 
 
