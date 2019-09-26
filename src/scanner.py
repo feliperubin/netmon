@@ -125,6 +125,8 @@ class Scanner():
 					for b3 in range(self.netaddr[3],self.netaddr[3]+256-self.netmask[3]):
 						host_ip = str(b0)+'.'+str(b1)+'.'+str(b2)+'.'+str(b3)
 						# Actually, it's the gateway
+
+						# I NEED TO USE THIS! socket.gethostbyname
 						host_mac = self.send_icmp_wait(host_ip,gw_mac)
 						if host_mac is not None:
 							print("Host ",host_ip)
@@ -144,28 +146,9 @@ class Scanner():
 	def start(self):
 		# print("Scanning Network %s.%s.%s.%s netmask %s.%s.%s.%s" % (self.netaddr,self.netmask))
 		self.network_discovery()
-		# if self.same_network():
-		# 	print("Same Network")
-		# 	self.local_discovery()
-		# else:
-		# 	print("Different Network")
-		# 	self.network_discovery()
-		# 	# Get Default Gateway MAC Address
-		# 	gw_ip = socket.inet_ntoa(self.sc.gw)
-		# 	gw_mac = self.send_arp_wait(gw_ip)
-		# 	if gw_mac is not None:
-		# 		print("Got Gateway MAC!")
-		# 		icmp_result = self.send_icmp_wait('8.8.8.8',gw_mac)	
-		# 		if icmp_result:
-		# 			print("Host",gw_ip)
-		# 	else:
-		# 		print("Failed to get Gateway MAC!")
-		# 		exit(0)
-		# self.send_arp("192.168.15.153")
 		self.on = True
-		# start_ip = [x&y for x,y in zip(self.netaddr,utils.cidr2mask(cidr)
 
-		print('Final Cache:')
+		print('ARP Cache:')
 		for i in self.cache:
 			print("Host %s (%s)" % (i,self.cache[i]))
 		return 0
