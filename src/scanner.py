@@ -117,7 +117,7 @@ class Scanner():
 			print("Obtained Gateway MAC Address")
 		else:
 			print("Failed to obtain the Gateway MAC Address.")
-			return 0
+			exit(0)
 
 		for b0 in range(self.netaddr[0],self.netaddr[0]+256-self.netmask[0]):
 			for b1 in range(self.netaddr[1],self.netaddr[1]+256-self.netmask[1]):

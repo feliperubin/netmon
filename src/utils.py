@@ -13,16 +13,15 @@ def mac2bytes(mac):
 	return struct.pack("!6B",*[int(x,16) for x in mac.split(":")])
 
 def checksum(msg):
-	s = 0
-	for i in range(0, len(msg), 2):
-		a = msg[i]
-		b = msg[i+1]
-		s = s + (a+(b << 8))
-	s = s + (s >> 16)
-	s0 = s
-	s = int(bin(~s)[1:],2) + 0xffff
-	print('~',s0,' + 0xffff =',s)
-	return socket.ntohs(s)
+    s = 0
+    msg = (msg + b'\x00') if len(msg)%2 else msg
+    for i in range(0, len(msg), 2):
+        w = msg[i] + (msg[i+1] << 8)
+        s = s + w
+        s = (s & 0xffff) + (s >> 16)
+    s = ~s & 0xffff
+    return socket.ntohs(s)
+
 
 
 
@@ -37,7 +36,7 @@ def dotted2bytes(dottedip):
 # cidr: int [0;32]
 # return: array with 4 octets [255,255,255,255]
 def cidr2mask(cidr):
-	bits = (cidr*'1')+('0'*(32 - cidr))
+	bits = (cidr*'1')+((32 - cidr)*'0')
 	return [
 		int(bits[0:8],2),
 		int(bits[8:16],2),

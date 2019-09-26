@@ -72,6 +72,10 @@ class PacketCreator():
 
 		# dest_addr = socket.gethostbyname(ip_dst)
 		return eth_hdr+ip_header+icmp_packet
+
+
+	def syn_tcp(self,ip_src,mac_src,ip_dst,mac_dst):
+		return 0
 	# def create(proto,ip_src=None,mac_src=None,ip_dst=None,mac_dst=None,):
 	# 	if proto == "arp":
 

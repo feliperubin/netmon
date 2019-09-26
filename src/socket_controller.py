@@ -38,19 +38,30 @@ class SocketController:
 		self.__s = None
 		self.__iface = iface
 		try:
-		    self.__s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+			self.__s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
 		except OSError as msg:
-		    print('Error'+str(msg))
-		    sys.exit(1)
-		self.__s.bind((self.__iface,0))
-		print('Socket created on interface',self.__iface)	
+			# print('Error'+str(msg))
+			print("Failed to create socket",self.__iface)
+			exit(0)
+		try:
+			self.__s.bind((self.__iface,0))
+		except OSError as msg:
+			print("Failed to bind device",self.__iface)
+			exit(0)
 
 
 		# Get Device MAC Address
 		
 		self.mac = self.__s.getsockname()[4]
 		# Get Device IP Address
-		self.ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
+		try:
+			self.ip = fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24]
+		except (OSError) as e:
+			print("Failed to obtain IP Address of",self.__iface)
+			exit(0)
+
+		
+
 
 		# Get Broadcast Address
 		# SIOCSIFHWBROADCAST SIOCSIFBRDADDR
@@ -59,16 +70,23 @@ class SocketController:
 		# https://stackoverflow.com/questions/2761829/python-get-default-gateway-for-a-local-interface-ip-address-in-linux
 		# Flags are RTF_* flags
 		# /usr/include/linux/route.h
-		with open("/proc/net/route") as route_f:
-			for line in route_f:
-				column = line.strip().split()
-				if column[1] != '00000000' or not int(column[3], 16) & 2:
-					continue
-				else:
-					# self.gw = socket.inet_ntoa(struct.pack("<L", int(column[2], 16)))
-					self.gw = struct.pack("<L", int(column[2], 16))
-					break
+		try:
+			with open("/proc/net/route") as route_f:
+				for line in route_f:
+					column = line.strip().split()
+					if column[1] != '00000000' or not int(column[3], 16) & 2:
+						continue
+					else:
+						# self.gw = socket.inet_ntoa(struct.pack("<L", int(column[2], 16)))
+						self.gw = struct.pack("<L", int(column[2], 16))
+						break
+		except:
+			print("Failed to obtain Gateway for",self.__iface)
+			exit(0)
+			
 		print("Default Gateway: ",socket.inet_ntoa(self.gw))
+
+		print("Raw Socket created on interface",self.__iface)
 		
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
 		# self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
