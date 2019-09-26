@@ -37,7 +37,8 @@ class PacketCreator():
 		ip_ttl = 255
 		ip_proto = 0x1
 		ip_total_len = 20 + 21
-		ip_check = 0xc6a0
+		# ip_check = 0xc6a0
+		ip_check = 0
 		ip_saddr = ip_src
 		ip_daddr = ip_dst
 		# ip_saddr = socket.inet_aton(ip_src)
@@ -50,11 +51,11 @@ class PacketCreator():
 		
 		# Second time with the correct checksum
 		# print("ip header:",ip_header)
-		# ip_check = utils.checksum(ip_header)
+		ip_check = utils.checksum(ip_header)
 
-		# ip_header = struct.pack("!BBHHHBBH4s4s", ip_ihl_ver, ip_tos, \
-		# 	ip_tot_len, ip_id, ip_frag_off, ip_ttl,\
-		# 	ip_proto, ip_check, ip_saddr, ip_daddr)		
+		ip_header = struct.pack("!BBHHHBBH4s4s", ip_ihl_ver, ip_tos, \
+			ip_total_len, ip_id, ip_frag_off, ip_ttl,\
+			ip_proto, ip_check, ip_saddr, ip_daddr)		
 
 
 		# ICMP Echo Request Header

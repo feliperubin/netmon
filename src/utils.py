@@ -20,21 +20,11 @@ def checksum(msg):
 		s = s + (a+(b << 8))
 	s = s + (s >> 16)
 	s0 = s
-	s = ~s + 0xffff
+	s = int(bin(~s)[1:],2) + 0xffff
 	print('~',s0,' + 0xffff =',s)
 	return socket.ntohs(s)
-# https://github.com/yywf/python/blob/master/tcp.py
-# def checksum(data):
-# 	s = 0
-# 	n = len(data) % 2
-# 	for i in range(0, len(data)-n, 2):
-# 		s+= ord(data[i]) + (ord(data[i+1]) << 8)
-# 	if n:
-# 		s+= ord(data[i+1])
-# 	while (s >> 16):
-# 		s = (s & 0xFFFF) + (s >> 16)
-# 	s = ~s & 0xffff
-# 	return s
+
+
 
 # Replace all code which uses socket directly with the following
 def bytes2dotted(bytesip):
