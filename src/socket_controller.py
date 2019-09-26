@@ -68,7 +68,7 @@ class SocketController:
 					# self.gw = socket.inet_ntoa(struct.pack("<L", int(column[2], 16)))
 					self.gw = struct.pack("<L", int(column[2], 16))
 					break
-		print("My default Gateway: ",socket.inet_ntoa(self.gw))
+		print("Default Gateway: ",socket.inet_ntoa(self.gw))
 		
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
 		# self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
@@ -90,8 +90,7 @@ class SocketController:
 	# Sends a network packet
 	# Send data to the socket. The socket must be connected to a remote socket
 	def send(self,packet):
-		x = self.__s.send(packet)
-		print('Sent: ',x)
+		self.__s.send(packet)
 
 
 # socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
