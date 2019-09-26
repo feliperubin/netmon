@@ -11,8 +11,11 @@ A ferramenta deve monitorar pacotes Ethernet, ARP, IP, ICMP, TCP e UDP. Para cad
 - Ethernet: endereços MAC origem e destino, tipo do pacote
 - ARP: ARP request/reply, endereços MAC origem e destino, endereços IP origem e destino
 - IP: endereços IP origem e destino, protocolo encapsulado, TTL
+- ICMP: tipo de pacote (Echo Reply, Destination Unreachable, etc) - https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Control_messages
+   - se for Echo Request ou Echo Reply, incluir também: identificador, número de sequência e payload (em ASCII)
 - TCP: portas origem e destino
 - UDP: portas origem e destino
+
 
 Além disso, a ferramenta deve gerar as seguintes estatísticas no término da monitoração (quando for solicitado o término da ferramenta através de Control+C):
 

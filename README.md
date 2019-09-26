@@ -42,6 +42,11 @@ IEEE 754
 ```bash
 str[x:y]
 (x:] , [y:) and (x:y)
+
+[1,2,3,4,5,6,7,8][1:] = [2,3,4,5,6,7,8]  #here is a slice from index 1 until end
+[1,2,3,4,5,6,7,8][2:4] = [3,4]    # [x,y] -> [ x; y-1] , same as for
+[1,2,3,4,5,6,7,8][:2] = [1,2]    # here is from the start until before index(2)
+
 ```
 
 ```bash

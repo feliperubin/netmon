@@ -4,18 +4,44 @@
 #
 #
 import socket
+import struct
 # Convert Mac Address format from Bytes to Hex
 def bytes2mac(bytesmac):
 	return ":".join("{:02x}".format(x) for x in bytesmac)
 
+def mac2bytes(mac):
+	return struct.pack("!6B",*[int(x,16) for x in mac.split(":")])
+
 def checksum(msg):
 	s = 0
 	for i in range(0, len(msg), 2):
+		a = msg[i]
 		b = msg[i+1]
 		s = s + (a+(b << 8))
 	s = s + (s >> 16)
+	s0 = s
 	s = ~s + 0xffff
+	print('~',s0,' + 0xffff =',s)
 	return socket.ntohs(s)
+# https://github.com/yywf/python/blob/master/tcp.py
+# def checksum(data):
+# 	s = 0
+# 	n = len(data) % 2
+# 	for i in range(0, len(data)-n, 2):
+# 		s+= ord(data[i]) + (ord(data[i+1]) << 8)
+# 	if n:
+# 		s+= ord(data[i+1])
+# 	while (s >> 16):
+# 		s = (s & 0xFFFF) + (s >> 16)
+# 	s = ~s & 0xffff
+# 	return s
+
+# Replace all code which uses socket directly with the following
+def bytes2dotted(bytesip):
+	return socket.inet_ntoa(bytesip)
+def dotted2bytes(dottedip):
+	return socket.inet_aton(dottedip)
+
 
 # Convert CIDR notation to network mask
 # cidr: int [0;32]

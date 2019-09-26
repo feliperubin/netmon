@@ -69,26 +69,50 @@ icmp_iana_t = {'0':{"str": "Echo Reply","rfc":"RFC792"},
 '253':{"str": "RFC3692-style Experiment 1","rfc":"RFC4727"},
 '254':{"str": "RFC3692-style Experiment 2","rfc":"RFC4727"}}
 
+# TO DO: SEE IF I'M CORRECTLY CONVERTING THE VALUES TO INTEGER
+#  WHEN THEY HAVE MORE THAN 1 BYTE
+# NOTE: I NEED TO VERIFY THE CHECKSUM OF ARRIVING PACKETS, IF THEY
+# ARE NOT CORRET, THEY SHOULD BE DISCARDED.
 class PacketInspector():
-	# def __init__(self):
 
+	# Receiving a timestamp on the IP payload is totally
+	# optional. Thus, even if it is there, the timestamp will
+	# also be considered part of the ASCII.
+	# Total Length - IP Header(20) - ICMP Header(8)
 	# Process ICMP Packet
 	def icmp_processing(self,rawp):
 		icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
 		# Note: This only works for ECHO Request/Reply
 		# Otherwise we should read the first 4,
 		# then the others accordingly
+
+		# Do consider that with the current information,
+		# only icmp_t(1B),code(1B) and checksum(2B) have the correct format
+		# the remainding 4 Bytes depend on the type/code.
 		icmp_t,code,checksum,\
 		icmp_id,icmp_seq = struct.unpack(ICMP_H_FORMAT,icmp_h)
 		
+		total_len = struct.unpack("!H",rawp[ETH_H_LEN+2:ETH_H_LEN+4])[0]
+		payload_len = total_len - IP_H_LEN - ICMP_H_LEN
+		
+
+		# IF it is ICMP ECHO Request or ICMP Echo Reply
 		if icmp_t == 0x0 or icmp_t == 0x8:
-			payload_raw = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN+8:]
-			payload = struct.unpack("!48s",payload_raw)
+			# Read the payload length according to total_len
+			payload_raw = rawp[ETH_H_LEN+IP_H_LEN+ICMP_H_LEN:\
+			ETH_H_LEN+IP_H_LEN+ICMP_H_LEN+payload_len]
+			
+			# The format of a char[]
+			payload_format = "!"+str(payload_len)+"s"
+			payload = struct.unpack(payload_format,payload_raw)[0]
+			# Decode as ascii
+			payload = payload.decode("ascii","backslashreplace")
 			return {
 			'type':icmp_iana_t[str(icmp_t)]["str"],
 			'id':int(hex(icmp_id),16),
 			'sequence':int(hex(icmp_seq),16),
 			'payload':payload}
+
 		return {'type':icmp_iana_t[str(icmp_t)]["str"]}
 	# Process UDP Datagram
 	def udp_processing(self,rawp):
@@ -109,7 +133,6 @@ class PacketInspector():
 		ip_ident,flag_offset,\
 		ttl,proto,checksum,\
 		src,dst = struct.unpack(IP_H_FORMAT,ip_h)
-		
 		# Check if version 4
 		if ver_ihl >> 4 == 0x4:
 			proto_str = None
@@ -125,7 +148,7 @@ class PacketInspector():
 			return {'protocol':proto_str,\
 			'ttl':ttl,\
 			'src':socket.inet_ntoa(src),\
-			'dst':socket.inet_ntoa(dst)}
+			'dst':socket.inet_ntoa(dst)},total_length
 		return None
 
 	# Process ARP Packet
@@ -156,7 +179,8 @@ class PacketInspector():
 		if packet['eth']['type'] == "arp":
 			packet['arp'] = self.arp_processing(rawp)
 		elif packet['eth']['type'] == "ip":
-			packet['ip'] =  self.ip_processing(rawp)
+			p_ip,ip_total_len = self.ip_processing(rawp)
+			packet['ip'] = p_ip
 			if packet['ip']['protocol'] == "icmp":
 				packet['icmp'] = self.icmp_processing(rawp)
 			elif packet['ip']['protocol'] == "tcp":

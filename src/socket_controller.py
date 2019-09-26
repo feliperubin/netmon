@@ -55,8 +55,20 @@ class SocketController:
 		# Get Broadcast Address
 		# SIOCSIFHWBROADCAST SIOCSIFBRDADDR
 
-		# Get  
-
+		# Get  Default Gateway
+		# https://stackoverflow.com/questions/2761829/python-get-default-gateway-for-a-local-interface-ip-address-in-linux
+		# Flags are RTF_* flags
+		# /usr/include/linux/route.h
+		with open("/proc/net/route") as route_f:
+			for line in route_f:
+				column = line.strip().split()
+				if column[1] != '00000000' or not int(column[3], 16) & 2:
+					continue
+				else:
+					# self.gw = socket.inet_ntoa(struct.pack("<L", int(column[2], 16)))
+					self.gw = struct.pack("<L", int(column[2], 16))
+					break
+		print("My default Gateway: ",socket.inet_ntoa(self.gw))
 		
 		# self.mac = utils.bytes2mac(self.__s.getsockname()[4])
 		# self.ip = socket.inet_ntoa(fcntl.ioctl(self.__s.fileno(),SIOCGIFADDR,struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
@@ -78,7 +90,8 @@ class SocketController:
 	# Sends a network packet
 	# Send data to the socket. The socket must be connected to a remote socket
 	def send(self,packet):
-		self.__s.send(packet)
+		x = self.__s.send(packet)
+		print('Sent: ',x)
 
 
 # socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
