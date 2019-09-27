@@ -109,8 +109,9 @@ class Scanner():
 	
 	def same_network(self):
 		# mask = 2**(32 - self.cidr)-1
-		for x,y,z in zip(struct.unpack("!BBBB",self.sc.ip),self.netaddr,self.netmask):
-			if x & z != y:
+		# Instead of testing with the host netmask, I will use mine
+		for x,y,z in zip(struct.unpack("!BBBB",self.sc.ip),self.netaddr,self.sc.netmask):
+			if x & z != y & z:
 				return False
 		return True
 

@@ -39,6 +39,7 @@ class SocketController:
 		self.__s = None
 		self.__iface = iface
 		self.proto = proto
+
 		# self.__stype = "AF_PACKET"
 
 
@@ -96,33 +97,18 @@ class SocketController:
 				exit(0)
 
 		# iface = "eth0"
+		# Obtain network mask
+		try:
+			self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(\
+				socket.AF_INET, socket.SOCK_DGRAM), 35099, struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
+			self.netmask = [int(x) for x in self.netmask.split('.')]
+			print("Netmask is",self.netmask)
+		except OSError as e:
+			print(e)
+			# print("Failed to obtain Network Mask of",self.__iface)
+			# exit(0)
 		# socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), 35099, struct.pack('256s', iface))[20:24])
 
-
-
-		# Get Broadcast Address
-		# SIOCSIFHWBROADCAST SIOCSIFBRDADDR
-
-		# Get  Default Gateway
-		# https://stackoverflow.com/questions/2761829/python-get-default-gateway-for-a-local-interface-ip-address-in-linux
-		# Flags are RTF_* flags
-		# /usr/include/linux/route.h
-
-		# try:
-		# 	with open("/proc/net/route") as route_f:
-		# 		for line in route_f:
-		# 			column = line.strip().split()
-		# 			if column[1] != '00000000' or not int(column[3], 16) & 2:
-		# 				continue
-		# 			else:
-		# 				# self.gw = socket.inet_ntoa(struct.pack("<L", int(column[2], 16)))
-		# 				self.gw = struct.pack("<L", int(column[2], 16))
-		# 				break
-		# except:
-		# 	print("Failed to obtain Gateway for",self.__iface)
-		# 	exit(0)
-			
-		# print("Default Gateway: ",socket.inet_ntoa(self.gw))
 		if proto is None:
 			print("Created Raw Socket iface ",self.__iface)
 		else:
