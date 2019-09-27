@@ -24,7 +24,6 @@ class PacketCreator():
 
 	# def icmp_echo_request(self,ip_src,mac_src,ip_dst,mac_dst):
 	def icmp_echo_request(self,ip_src,ip_dst):
-		print("Create packet from",utils.bytes2dotted(ip_src),"to",utils.bytes2dotted(ip_dst))
 		# Protocol
 		# protocol = 0x0800
 		# Ethernet Header 
@@ -82,11 +81,13 @@ class PacketCreator():
 		return ip_header+icmp_packet
 
 	# cat /usr/include/linux/tcp.h
-	def tcp_syn(self,ip_src,mac_src,ip_dst,mac_dst,srcp,dstp):
+	# def tcp_syn(self,ip_src,mac_src,ip_dst,mac_dst,srcp,dstp):
+
+	def tcp_syn(self,ip_src,srcp,ip_dst,dstp):
 		# Protocol
-		protocol = 0x0800
+		# protocol = 0x0800
 		# Ethernet Header 
-		eth_hdr = struct.pack("!6s6sH", mac_dst, mac_src, protocol)
+		# eth_hdr = struct.pack("!6s6sH", mac_dst, mac_src, protocol)
 
 		# IP Header 20 bytes
 		ip_ver = 4
@@ -95,7 +96,7 @@ class PacketCreator():
 		ip_id = 5432
 		ip_frag_off = 0
 		ip_ttl = 255
-		ip_proto = 0x1
+		ip_proto = 0x6
 		ip_total_len = 20 + 20
 		# ip_check = 0xc6a0
 		ip_check = 0
@@ -119,45 +120,34 @@ class PacketCreator():
 
 		
 		#srcp,dstp args
-		# tcp_srcp
-		# tcp_dstp
-		seqn = 0
-		ackn = 0
-		tcp_hlen = 5
+		# tcp_srcp = srcp
+		# tcp_dstp = dstp
+		tcp_seq = 0
+		tcp_ack = 0
+		tcp_hl = 5
 		tcp_r = 0
-		tcp_hr = (tcp_hlen << 4) + tcp_r
+		tcp_offset = (tcp_hl << 4) + 0
+		#
+		#
 		tcp_flags = 2 # Syn
-		tcp_wsize = 65535
+		tcp_wsize = socket.htons(5840)
+		# tcp_wsize=  5840
 		tcp_check = 0
 		tcp_urgptr = 0
-
+		# tcp_payload = 1
 
 		tcp_header = struct.pack("!HHLLBBHHH",\
-			srcp,dstp,seqn,ackn,tcp_hr,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
+			srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
+
+		tcp_pseudo_header = struct.pack("!4s4sBBH",\
+		 ip_src , ip_dst , 0 , socket.IPPROTO_TCP, len(tcp_header));
 
 		tcp_check = utils.checksum(tcp_header)
 
 		tcp_header = struct.pack("!HHLLBBHHH",\
-			srcp,dstp,seqn,ackn,tcp_hr,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
+			srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
 
-		# return eth_hdr+ip_header+tcp_header
 		return ip_header+tcp_header
-
-
-
-		# options = 
-
-
-
-		
-
-
-		return 0
-	# def create(proto,ip_src=None,mac_src=None,ip_dst=None,mac_dst=None,):
-	# 	if proto == "arp":
-
-#https://inc0x0.com/tcp-ip-packets-introduction/tcp-ip-packets-3-manually-create-and-send-raw-tcp-ip-packets/
-
 
 
 

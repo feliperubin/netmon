@@ -11,7 +11,7 @@ import queue
 import struct 
 import socket
 import utils
-
+import time
 
 # To stop waiting a packet that will never arrive.
 
@@ -83,13 +83,13 @@ class Scanner():
 		dest_addr = socket.gethostbyname(ip_dst)
 		self.icmp_sc.sendto(icmp_req_packet,dest_addr)
 
-		for i in range(0,10):
+		for i in range(0,3):
 			try:
 				sniffer = self.sc.sniffer(timeout=1.5)
 				raw_packet,address = next(sniffer)
 				# print("HI RAW:",raw_packet)
 				packet = self.inspector.process(raw_packet)
-				print(packet)
+				# print(packet)
 				# print("Raw Packet is: ",raw_packet,"And packet is:",packet)
 				if packet is not None:
 					if packet['eth']['type'] == 'ip':
@@ -159,18 +159,21 @@ class Scanner():
 			self.icmp_discovery()
 		return 0
 
-	def tcp_scan_wait(self,ip_dst,mac_dst,dstp):
+	def tcp_scan_wait(self,ip_dst,dstp):
 		tcp_syn_packet = self.creator.tcp_syn(
-			self.sc.ip,self.sc.mac,utils.dotted2bytes(ip_dst),\
-			utils.mac2bytes(mac_dst),0,dstp)
+			self.tcp_sc.ip,7210,utils.dotted2bytes(ip_dst),dstp)
 
 		# This have a max time, if there's no answer or traffic it will stop.		
+		dest_addr = socket.gethostbyname(ip_dst)
+		self.tcp_sc.sendto(tcp_syn_packet,dest_addr,dstp)
+		# time.sleep(2)
 		for i in range(0,3):
 			try:
-				self.sc.send(tcp_syn_packet)
-				sniffer = self.sc.sniffer(timeout=1.5)
+				# self.sc.send(tcp_syn_packet)
+				sniffer = self.sc.sniffer(timeout=3.0)
 				raw_packet,address = next(sniffer)
 				packet = self.inspector.process(raw_packet)
+				print(packet)
 				if packet is not None:
 					if packet['eth']['type'] == 'ip':
 						if packet['ip']['protocol'] == 'tcp':
@@ -188,8 +191,9 @@ class Scanner():
 		for host in self.cache:
 			for pg in self.ports:
 				for port in range(pg[0],pg[1]+1):
-					print("Test Port: ",port)
-					self.tcp_scan_wait(host,self.cache[host],port)
+					# if self.tcp_scan_wait(host,self.cache[host],port):
+					if self.tcp_scan_wait(host,port):
+						print("Host %s:%d",host,port)
 		# for 
 		return 0
 

@@ -34,7 +34,9 @@ ARP_H_FORMAT = "!HHBBH6s4s6s4s"
 IP_H_FORMAT = "!BBHHHBBH4s4s"
 # [SRC PORT(2B)|DST PORT(2B)|LENGTH(2B)|CHECKSUM(2B)]
 UDP_H_FORMAT = "!HHHH"
-TCP_H_FORMAT = "!HH4s4sBBHHH"
+
+# TCP_H_FORMAT = "!HH4s4sBBHHH"
+TCP_H_FORMAT = "!HHLLBBHHH"
 
 # Only Echo Request/Reply
 ICMP_H_FORMAT="!BBHHH"
@@ -116,7 +118,11 @@ class PacketInspector():
 			'sequence':int(hex(icmp_seq),16),
 			'payload':payload}
 
-		return {'type':icmp_iana_t[str(icmp_t)]["str"]}
+		if str(icmp_t) in icmp_iana_t:
+			return {'type':icmp_iana_t[str(icmp_t)]["str"]}
+		else:
+			return None # Unknown iana message
+		# return {'type':icmp_iana_t[str(icmp_t)]["str"]}
 	# Process UDP Datagram
 	def udp_processing(self,rawp):
 		udp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+UDP_H_LEN]
@@ -146,12 +152,13 @@ class PacketInspector():
 			elif proto == 0x11: # 17
 				proto_str = "udp"
 			else: # Unknown
+				pritn("Proto was",proto)
 				proto_str = None
 
 			return {'protocol':proto_str,\
 			'ttl':ttl,\
 			'src':socket.inet_ntoa(src),\
-			'dst':socket.inet_ntoa(dst)},total_length
+			'dst':socket.inet_ntoa(dst)}
 		return None
 
 	# Process ARP Packet
@@ -178,24 +185,27 @@ class PacketInspector():
 	def process(self,rawp):
 		# Parse Ethernet Header
 		# TO DO: offset calculation here! no need to pass all packet
-		packet = {'eth':self.eth_processing(rawp)}
-		if packet['eth']['type'] == "arp":
-			packet['arp'] = self.arp_processing(rawp)
-		elif packet['eth']['type'] == "ip":
-			p_ip,ip_total_len = self.ip_processing(rawp)
-			packet['ip'] = p_ip
-			if packet['ip']['protocol'] == "icmp":
-				packet['icmp'] = self.icmp_processing(rawp)
-			elif packet['ip']['protocol'] == "tcp":
-				packet['tcp'] = self.tcp_processing(rawp)
-			elif packet['ip']['protocol'] == "udp":
-				packet['udp'] = self.udp_processing(rawp)
+		try:
+			packet = {'eth':self.eth_processing(rawp)}
+			if packet['eth']['type'] == "arp":
+				packet['arp'] = self.arp_processing(rawp)
+			elif packet['eth']['type'] == "ip":
+				packet['ip'] = self.ip_processing(rawp)
+				if packet['ip']['protocol'] == "icmp":
+					packet['icmp'] = self.icmp_processing(rawp)
+				elif packet['ip']['protocol'] == "tcp":
+					packet['tcp'] = self.tcp_processing(rawp)
+				elif packet['ip']['protocol'] == "udp":
+					packet['udp'] = self.udp_processing(rawp)
+				else:
+					return None
 			else:
 				return None
-		else:
+			# else : 
+			# 	print("Packet Type Unknown",packet['eth']['type'])
+			return packet
+		except:
+			print("Error on Packet Inspector")
 			return None
-		# else : 
-		# 	print("Packet Type Unknown",packet['eth']['type'])
-		return packet
 
 

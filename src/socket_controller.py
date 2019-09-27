@@ -149,8 +149,9 @@ class SocketController:
 		self.__s.send(packet)
 
 	# Send to a specific host
-	def sendto(self,packet,dst):
-		self.__s.sendto(packet,(dst,0))
+	def sendto(self,packet,dst,dstp=0):
+		x = self.__s.sendto(packet,(dst,dstp))
+		return x
 
 
 # socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
