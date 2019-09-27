@@ -3,12 +3,12 @@ import struct
 
 def checksum(msg):
     s = 0
+    msg = (msg + b'\x00') if len(msg)%2 else msg
     for i in range(0, len(msg), 2):
-        a = msg[i]
-        b = msg[i+1]
-        s = s + (a+(b << 8))
-    s = s + (s >> 16)
-    s = ~s + 0xffff
+        w = msg[i] + (msg[i+1] << 8)
+        s = s + w
+        s = (s & 0xffff) + (s >> 16)
+    s = ~s & 0xffff
     return socket.ntohs(s)
 
 try:
@@ -40,22 +40,21 @@ ip_ihl_ver = (ip_ver << 4) + ip_ihl
 ip_header = struct.pack("!BBHHHBBH4s4s", ip_ihl_ver, ip_tos, ip_tot_len, ip_id, ip_frag_off, ip_ttl,
     ip_proto, ip_check, ip_saddr, ip_daddr)
 
-
 # ICMP Echo Request Header
 type = 8
 code = 0
-mychecksum = 0xc233
+mychecksum = 0x00
 identifier = 12345
 seqnumber = 0
 payload = b"istoehumteste"
 
-icmp_packet = struct.pack("!BBHHH13s", type, code, mychecksum, identifier, seqnumber, payload)
+icmp_packet = struct.pack("!BBHHH%ds"%len(payload), type, code, mychecksum, identifier, seqnumber, payload)
 
-# mychecksum = checksum(icmp_packet)
+mychecksum = checksum(icmp_packet)
 
 # print("Checksum: {.02x}".format(mychecksum))
 
-# icmp_packet = struct.pack("!BBHHH14s", type, code, mychecksum, identifier, seqnumber, payload)
+icmp_packet = struct.pack("!BBHHH%ds"%len(payload), type, code, mychecksum, identifier, seqnumber, payload)
 
 dest_ip = "10.32.143.194"
 dest_addr = socket.gethostbyname(dest_ip)

@@ -15,14 +15,13 @@ except OSError as msg:
 
 print('Socket created!')
 
-s.bind(('eth1',0))
+s.bind(('enp4s0',0))
 
 # Header Ethernet
 # MAC Destino - 6 bytes
 dest_mac = b"\xff\xff\xff\xff\xff\xff"
 # MAC Origem - 6 bytes
-
-source_mac = b"\x00\x1c\x42\x3e\x76\xeb"
+source_mac = b"\xa4\x1f\x72\xf5\x90\x41"
 protocol = 0x0806
 
 eth_hdr = struct.pack("!6s6sH", dest_mac, source_mac, protocol)
@@ -33,13 +32,12 @@ ptype = 0x0800
 hlen = 6
 plen = 4
 op = 1 # request
-src_ip = socket.inet_aton("192.168.15.67")
+src_ip = socket.inet_aton("10.32.143.98")
 target_mac = b"\x00\x00\x00\x00\x00\x00"
-target_ip = socket.inet_aton("192.168.15.12")
-1
+target_ip = socket.inet_aton("10.32.143.140")
+
 arp_hdr = struct.pack("!HHBBH6s4s6s4s", htype, ptype, hlen, plen, op, source_mac, src_ip, target_mac, target_ip)
 
 packet = eth_hdr+arp_hdr
 
 s.send(packet)
-

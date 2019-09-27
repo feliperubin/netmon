@@ -21,8 +21,7 @@ import threading
 import queue
 
 class Monitor():
-	def __init__(self,iface,mode=0,verbose=False,use_threads=False):
-		self.mode = mode
+	def __init__(self,iface,verbose=False,use_threads=False):
 		self.verbose = verbose
 		# self.raw_buffer = []
 		self.packet_data = []
@@ -32,24 +31,12 @@ class Monitor():
 		'talks':{},'bigsize':{}}
 
 		self.iface = iface
-		self.sc = None
+		self.sc = SocketController(self.iface)
 		self.on = 0
 		self.inspector = PacketInspector()
 		self.raw_buffer = queue.Queue(maxsize=0)
 		self.use_threads = use_threads
 		
-	# Set Network Interface
-	def set_iface(self,iface):
-		if self.on:
-			print("Monitor must be powered off")
-			return
-		self.iface = iface
-	# Set Monitoring Mode	
-	def set_mode(self,mode):
-		if self.on:
-			print("Monitor must be powered off")
-			return
-		self.mode = mode
 	def pretty_print(self,dpacket,padding="",incr=" "):
 		for key,value in dpacket.items():
 			
@@ -83,7 +70,6 @@ class Monitor():
 	# Start Monitoring
 	def start(self): # Starts Monitoring
 		self._start_on = 1
-		self.sc = SocketController(self.iface)
 		self.on = 1
 		sniffer = None
 		if self.use_threads:
@@ -92,7 +78,6 @@ class Monitor():
 			worker.start()
 		else:
 			sniffer = self.sc.sniffer()
-
 		# raw_packet,address = None,None
 
 		while self.on:
@@ -162,8 +147,8 @@ class Monitor():
 			else:
 				pass
 		self._start_on = 0
-		self.sc = None
-		print("Not on anymore!")
+		# self.sc = None
+		# print("Not on anymore!")
 	
 	# Stop Monitoring
 	def stop(self):

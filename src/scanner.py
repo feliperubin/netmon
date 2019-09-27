@@ -20,6 +20,14 @@ class Scanner():
 		self.iface = iface
 		self.on = False
 		self.sc = SocketController(self.iface)
+		self.icmp_sc = SocketController(self.iface,proto="icmp")
+		self.tcp_sc = SocketController(self.iface,"tcp")
+		self.udp_sc = SocketController(self.iface,"udp")
+		
+		# self.sc_arp = SocketController(self.iface,"arp")
+		# self.sc_tcp = SocketController(self.iface,"tcp")
+		# self.sc_udp = SocketController(self.iface,"udp")
+
 		self.inspector = PacketInspector()
 		self.creator = PacketCreator()
 		# List of packets to wait. 
@@ -27,10 +35,8 @@ class Scanner():
 		self.waiting_packet = {}
 		
 		self.ports = ports
-		# self.monitor = Monitor()
-		# self.sc = monitor.sc
-		# ip:mac
-		self.cache = {}
+		
+		self.cache = {} # ip:mac
 		self.cidr = cidr
 		# Octet array representation: /24 is [255,255,255,0]
 		self.netmask = utils.cidr2mask(cidr)
@@ -63,25 +69,36 @@ class Scanner():
 				pass
 		return None
 
-	def send_icmp_wait(self,ip_dst,mac_dst):
-		icmp_req_packet = self.creator.icmp_echo_request(
-			self.sc.ip,self.sc.mac,utils.dotted2bytes(ip_dst),\
-			utils.mac2bytes(mac_dst))
+	def send_icmp_wait(self,ip_dst):
+		# icmp_req_packet = self.creator.icmp_echo_request(
+		# 	self.sc.ip,self.sc.mac,utils.dotted2bytes(ip_dst),\
+		# 	utils.mac2bytes(mac_dst))
 
-		# This have a max time, if there's no answer or traffic it will stop.		
-		for i in range(0,3):
+		icmp_req_packet = self.creator.icmp_echo_request(
+			self.icmp_sc.ip,utils.dotted2bytes(ip_dst))
+
+		# TA TIRANDO O ETHERNET...
+		# This have a max time, if there's no answer or traffic it will stop.	
+		# THIS HERE! MUST BE ON A THREAD ON A LIST WAITING TO GET ANSWER!!!
+		dest_addr = socket.gethostbyname(ip_dst)
+		self.icmp_sc.sendto(icmp_req_packet,dest_addr)
+
+		for i in range(0,10):
 			try:
-				self.sc.send(icmp_req_packet)
 				sniffer = self.sc.sniffer(timeout=1.5)
 				raw_packet,address = next(sniffer)
+				# print("HI RAW:",raw_packet)
 				packet = self.inspector.process(raw_packet)
+				print(packet)
+				# print("Raw Packet is: ",raw_packet,"And packet is:",packet)
 				if packet is not None:
 					if packet['eth']['type'] == 'ip':
 						if packet['ip']['protocol'] == 'icmp':
 							if packet['ip']['src'] == ip_dst and \
-							packet['ip']['dst'] == utils.bytes2dotted(self.sc.ip):
+							packet['ip']['dst'] == utils.bytes2dotted(self.icmp_sc.ip):
 								return packet['eth']['src']
 			except socket.timeout:
+				# print("giveup")
 				pass
 		return None
 
@@ -111,13 +128,13 @@ class Scanner():
 
 
 	def icmp_discovery(self):
-		gw_ip = socket.inet_ntoa(self.sc.gw)
-		gw_mac = self.send_arp_wait(gw_ip)
-		if gw_mac is not None:
-			print("Obtained Gateway MAC Address")
-		else:
-			print("Failed to obtain the Gateway MAC Address.")
-			exit(0)
+		# gw_ip = socket.inet_ntoa(self.sc.gw)
+		# gw_mac = self.send_arp_wait(gw_ip)
+		# if gw_mac is not None:
+		# 	print("Obtained Gateway MAC Address")
+		# else:
+		# 	print("Failed to obtain the Gateway MAC Address.")
+		# 	exit(0)
 
 		for b0 in range(self.netaddr[0],self.netaddr[0]+256-self.netmask[0]):
 			for b1 in range(self.netaddr[1],self.netaddr[1]+256-self.netmask[1]):
@@ -127,7 +144,7 @@ class Scanner():
 						# Actually, it's the gateway
 
 						# I NEED TO USE THIS! socket.gethostbyname
-						host_mac = self.send_icmp_wait(host_ip,gw_mac)
+						host_mac = self.send_icmp_wait(host_ip)
 						if host_mac is not None:
 							print("Host ",host_ip)
 							self.cache[host_ip] = host_mac
@@ -142,16 +159,70 @@ class Scanner():
 			self.icmp_discovery()
 		return 0
 
+	def tcp_scan_wait(self,ip_dst,mac_dst,dstp):
+		tcp_syn_packet = self.creator.tcp_syn(
+			self.sc.ip,self.sc.mac,utils.dotted2bytes(ip_dst),\
+			utils.mac2bytes(mac_dst),0,dstp)
+
+		# This have a max time, if there's no answer or traffic it will stop.		
+		for i in range(0,3):
+			try:
+				self.sc.send(tcp_syn_packet)
+				sniffer = self.sc.sniffer(timeout=1.5)
+				raw_packet,address = next(sniffer)
+				packet = self.inspector.process(raw_packet)
+				if packet is not None:
+					if packet['eth']['type'] == 'ip':
+						if packet['ip']['protocol'] == 'tcp':
+							if packet['ip']['src'] == ip_dst and \
+							packet['ip']['dst'] == utils.bytes2dotted(self.sc.ip):
+								return True
+								# return packet['tcp']['src']
+			except socket.timeout:
+				pass
+		return False
+
+	def port_scan(self):
+		my_port = 0
+		# Must verify start_port <= end_port
+		for host in self.cache:
+			for pg in self.ports:
+				for port in range(pg[0],pg[1]+1):
+					print("Test Port: ",port)
+					self.tcp_scan_wait(host,self.cache[host],port)
+		# for 
+		return 0
+
 	# Begin Network Discovery
 	def start(self):
 		# print("Scanning Network %s.%s.%s.%s netmask %s.%s.%s.%s" % (self.netaddr,self.netmask))
+		print("My IP: ",utils.bytes2dotted(self.sc.ip))
+		print("My MAC: ",utils.bytes2mac(self.sc.mac))
 		self.network_discovery()
+		self.port_scan()
+
 		self.on = True
 
 		print('ARP Cache:')
 		for i in self.cache:
 			print("Host %s (%s)" % (i,self.cache[i]))
 		return 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -121,7 +121,7 @@ def active():
 HELP_SHORT_STR = \
 """\
 netmon: Unrecognized Parameters
-Usage: python3 netmon.py [-s|-m] -i <iface> -p <port-port|port> <network/cidr>
+Usage: python3 netmon.py [-s|-m] -i <iface> -p <port-port|port> -n <network/cidr>
 See -h for help.
 """
 HELP_LONG_STR = \
@@ -161,9 +161,18 @@ def main():
 			ports = sys.argv[i+1]
 			if "-" in ports:
 				ports = ports.split("-")
-				params['ports'].append((int(ports[0]),int(ports[1])))
+				# params['ports'] = [int(ports[0]),int(ports[1])]
+				p0 = int(ports[0])
+				p1 = int(ports[1])
+				# Ensures that start_port won't higher than end_port
+				if p0 > p1: 
+					p0,p1 = p1,p0
+					
+				params['ports'].append([p0,p1])
 			else:
-				params['ports'].append((int(ports),int(ports)))
+				p0 = int(ports)
+				params['ports'].append([p0,p0])
+				# params['ports'] = [int(ports),int(ports)]
 			i+=1
 		elif sys.argv[i] == "-h":
 			print(HELP_LONG_STR)
@@ -173,6 +182,14 @@ def main():
 			params['net'] = [int(x) for x in tgt[0].split('.')]
 			params['cidr'] = int(tgt[1])
 			i+=1
+
+	# if params['iface'] == '':
+	# 	print("Interface not provided: -i <interface>")
+	# 	exit(0)
+	
+	if params['mode'] == 1 and (params['net'] == '' or params['cidr'] == ''):
+		print("Network wasn't provided: -n <net>/<cidr>")
+		exit(0)
 
 	# except Exception e:
 	# 	print(e)

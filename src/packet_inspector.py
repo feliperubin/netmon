@@ -80,8 +80,11 @@ class PacketInspector():
 	# also be considered part of the ASCII.
 	# Total Length - IP Header(20) - ICMP Header(8)
 	# Process ICMP Packet
-	def icmp_processing(self,rawp):
-		icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
+	def icmp_processing(self,rawp,no_offset=False):
+		if no_offset:
+			icmp_h = rawp
+		else:
+			icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
 		# Note: This only works for ECHO Request/Reply
 		# Otherwise we should read the first 4,
 		# then the others accordingly

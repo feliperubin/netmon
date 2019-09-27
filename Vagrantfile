@@ -9,7 +9,7 @@ MACHINE_NAME= "netmon"
 SMB_SHARE= "netmon"
 VM_MEMORY = 2048
 VM_VCPUS = 2 #vCPU
-NESTED_VIRT=true # Nested Virtualization support
+NESTED_VIRT=false # Nested Virtualization support
 LINKED_CLONE=true # Use Linked Clone instead of full VM
 ENABLE_SYNCED_FOLDER=true # Disable Synced folder
 
@@ -34,8 +34,12 @@ Vagrant.configure("2") do |config|
   # "en0",
   # "en4"
   # ],type: "dhcp"
-  config.vm.network "public_network",gateway: "192.168.15.10"
+  config.vm.network "private_network",type: "dhcp"
+  
+  # Wireless or Ethernet
+  config.vm.network "public_network", bridge: ['en0','en4']
 
+  
 
   config.vm.provider :parallels do |v, override|
       # override.vm.box = "bento/ubuntu-16.04"
@@ -48,7 +52,7 @@ Vagrant.configure("2") do |config|
           system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
       end
       # v.check_guest_tools = true
-      v.update_guest_tools = false
+      v.update_guest_tools = true
 
       if NESTED_VIRT then
         #Enables nested virtualization

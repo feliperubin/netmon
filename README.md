@@ -1,5 +1,14 @@
 # T2 Lab Redes
 
+**Code Execution**
+```bash
+# Scan -s
+python3 netmon.py -s -i eth0 -p 5000-5001 -n 192.168.15.10/32
+python3 netmon.py -s -i eth0 -p 80 -n 192.168.15.0/24
+# Monitor
+python3 netmon.py -m -i eth0
+```
+
 
 **Docker Execution**
 
