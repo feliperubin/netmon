@@ -134,7 +134,8 @@ class PacketInspector():
 		src,dst,seq,ack,\
 		hl_r,flags,window,\
 		checksum,urgent = struct.unpack(TCP_H_FORMAT,tcp_h)
-		return {'src':src,'dst':dst}
+		# return {'src':src,'dst':dst}
+		return {'src':src,'dst':dst,'flag':flags}
 	# Process IP Packet
 	def ip_processing(self,rawp):
 		ip_h = rawp[ETH_H_LEN:IP_H_LEN+ETH_H_LEN]
@@ -205,7 +206,7 @@ class PacketInspector():
 			# 	print("Packet Type Unknown",packet['eth']['type'])
 			return packet
 		except:
-			print("Error on Packet Inspector")
+			# print("Error on Packet Inspector")
 			return None
 
 

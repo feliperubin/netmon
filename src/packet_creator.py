@@ -83,6 +83,76 @@ class PacketCreator():
 	# cat /usr/include/linux/tcp.h
 	# def tcp_syn(self,ip_src,mac_src,ip_dst,mac_dst,srcp,dstp):
 
+	# def tcp_syn(self,ip_src,srcp,ip_dst,dstp):
+	# 	# Protocol
+	# 	# protocol = 0x0800
+	# 	# Ethernet Header 
+	# 	# eth_hdr = struct.pack("!6s6sH", mac_dst, mac_src, protocol)
+
+	# 	# IP Header 20 bytes
+	# 	ip_ver = 4
+	# 	ip_ihl = 5
+	# 	ip_tos = 0
+	# 	ip_id = 5432
+	# 	ip_frag_off = 0
+	# 	ip_ttl = 255
+	# 	ip_proto = 0x6
+	# 	ip_total_len = 20 + 20
+	# 	# ip_check = 0xc6a0
+	# 	ip_check = 0
+	# 	ip_saddr = ip_src
+	# 	ip_daddr = ip_dst
+	# 	# ip_saddr = socket.inet_aton(ip_src)
+	# 	# ip_daddr = socket.inet_aton(ip_dst)
+	# 	ip_ihl_ver = (ip_ver << 4) + ip_ihl
+	# 	# First time to calculate the checksum
+	# 	ip_header = struct.pack("!BBHHHBBH4s4s", ip_ihl_ver, ip_tos, \
+	# 		ip_total_len, ip_id, ip_frag_off, ip_ttl,\
+	# 		ip_proto, ip_check, ip_saddr, ip_daddr)
+		
+	# 	# Second time with the correct checksum
+	# 	# print("ip header:",ip_header)
+	# 	ip_check = utils.checksum(ip_header)
+
+	# 	ip_header = struct.pack("!BBHHHBBH4s4s", ip_ihl_ver, ip_tos, \
+	# 		ip_total_len, ip_id, ip_frag_off, ip_ttl,\
+	# 		ip_proto, ip_check, ip_saddr, ip_daddr)		
+
+		
+	# 	#srcp,dstp args
+	# 	# tcp_srcp = srcp
+	# 	# tcp_dstp = dstp
+	# 	tcp_seq = 0
+	# 	tcp_ack = 0
+	# 	tcp_hl = 5
+	# 	tcp_r = 0
+	# 	tcp_offset = (tcp_hl << 4) + 0
+	# 	#
+	# 	#
+	# 	tcp_flags = 2 # Syn
+	# 	tcp_wsize = socket.htons(5840)
+	# 	# tcp_wsize=  5840
+	# 	tcp_check = 0
+	# 	tcp_urgptr = 0
+	# 	# tcp_payload = 1
+
+
+	# 	tcp_header = struct.pack("!HHLLBBHHH",\
+	# 		srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
+
+	# 	tcp_pseudo_header = struct.pack("!4s4sBBH",\
+	# 	 ip_src , ip_dst , 0 , socket.IPPROTO_TCP, len(tcp_header));
+
+	# 	tcp_check = utils.checksum(tcp_header)
+
+	# 	tcp_header = struct.pack("!HHLLBBHHH",\
+	# 		srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
+
+	# 	return ip_header+tcp_header
+
+
+
+
 	def tcp_syn(self,ip_src,srcp,ip_dst,dstp):
 		# Protocol
 		# protocol = 0x0800
@@ -135,6 +205,7 @@ class PacketCreator():
 		tcp_check = 0
 		tcp_urgptr = 0
 		# tcp_payload = 1
+		# payload = ("[("*30)+"Hello"+("]"*30)
 
 		tcp_header = struct.pack("!HHLLBBHHH",\
 			srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
@@ -142,20 +213,18 @@ class PacketCreator():
 		tcp_pseudo_header = struct.pack("!4s4sBBH",\
 		 ip_src , ip_dst , 0 , socket.IPPROTO_TCP, len(tcp_header));
 
-		tcp_check = utils.checksum(tcp_header)
+		tcp_check = utils.checksum(tcp_pseudo_header+tcp_header)
+
+		
 
 		tcp_header = struct.pack("!HHLLBBHHH",\
 			srcp,dstp,tcp_seq,tcp_ack,tcp_offset,tcp_flags,tcp_wsize,tcp_check,tcp_urgptr)
 
+		# return ip_header+tcp_header
 		return ip_header+tcp_header
 
 
-
-
-
-
-
-
+		
 
 
 
