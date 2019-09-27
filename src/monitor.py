@@ -45,8 +45,8 @@ class Monitor():
 				self.pretty_print(value,padding+incr)
 			else:
 				print(padding+str(key)+": "+str(value))
-	def compact_print(self,dpacket,padding="",incr=" "):
-		rt=""
+	def ordered_print(self,dpacket,padding="",incr=" "):
+		print("[eth src:%s dst:%s type:%s]" % (dpacket['eth']['src'],dpacket['eth']['dst'],dpacket['eth']['type']))
 		for key,value in dpacket.items():
 			if rt != "":
 				rt+=","

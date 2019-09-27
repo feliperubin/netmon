@@ -77,12 +77,6 @@ class SocketController:
 				print("Failed to create socket",self.__iface)
 				exit(0)
 
-
-
-		# self.mac = utils.mac2bytes(self.mac)
-		# Get Device MAC Address
-		
-		
 		# Get Device IP Address
 		try:
 			self.ip = fcntl.ioctl(self.__s.fileno(),\
@@ -91,23 +85,16 @@ class SocketController:
 			try:
 				self.ip = socket.gethostbyname(self.__s.gethostname())
 			except:
-				# try:
-				# except:
 				print("Failed to obtain IP Address of",self.__iface)
 				exit(0)
-
-		# iface = "eth0"
-		# Obtain network mask
+		# Obtain the network mask
 		try:
 			self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(\
 				socket.AF_INET, socket.SOCK_DGRAM), 35099, struct.pack('256s', bytes(iface[:15], 'utf-8')))[20:24])
 			self.netmask = [int(x) for x in self.netmask.split('.')]
-			print("Netmask is",self.netmask)
 		except OSError as e:
-			print(e)
-			# print("Failed to obtain Network Mask of",self.__iface)
-			# exit(0)
-		# socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), 35099, struct.pack('256s', iface))[20:24])
+			print("Failed to obtain Network Mask of",self.__iface)
+			exit(0)
 
 		if proto is None:
 			print("Created Raw Socket iface ",self.__iface)
@@ -140,14 +127,6 @@ class SocketController:
 	def sendto(self,packet,dst,dstp=0):
 		x = self.__s.sendto(packet,(dst,dstp))
 		return x
-
-
-# socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
-# Translate the host/port argument into a sequence of 5-tuples that contain all the necessary arguments for creating a socket connected to that service. host is a domain name, a string representation of an IPv4/v6 address or None. port is a string service name such as 'http', a numeric port number or None. By passing None as the value of host and port, you can pass NULL to the underlying C API.
-# Convert an IPv4 address from dotted-quad string format (for example, ‘123.45.67.89’) to 32-bit packed binary format,
-# socket.inet_aton
-
-
 
 
 

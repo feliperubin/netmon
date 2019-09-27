@@ -87,6 +87,8 @@ class PacketInspector():
 			icmp_h = rawp
 		else:
 			icmp_h = rawp[ETH_H_LEN+IP_H_LEN:ETH_H_LEN+IP_H_LEN+ICMP_H_LEN]
+
+
 		# Note: This only works for ECHO Request/Reply
 		# Otherwise we should read the first 4,
 		# then the others accordingly
@@ -100,7 +102,6 @@ class PacketInspector():
 		total_len = struct.unpack("!H",rawp[ETH_H_LEN+2:ETH_H_LEN+4])[0]
 		payload_len = total_len - IP_H_LEN - ICMP_H_LEN
 		
-
 		# IF it is ICMP ECHO Request or ICMP Echo Reply
 		if icmp_t == 0x0 or icmp_t == 0x8:
 			# Read the payload length according to total_len
@@ -113,15 +114,21 @@ class PacketInspector():
 			# Decode as ascii
 			payload = payload.decode("ascii","backslashreplace")
 			return {
-			'type':icmp_iana_t[str(icmp_t)]["str"],
+			'type':icmp_t,
+			'code':code,
+			'name':icmp_iana_t[str(icmp_t)]["str"],
 			'id':int(hex(icmp_id),16),
 			'sequence':int(hex(icmp_seq),16),
 			'payload':payload}
 
 		if str(icmp_t) in icmp_iana_t:
-			return {'type':icmp_iana_t[str(icmp_t)]["str"]}
-		else:
-			return None # Unknown iana message
+			return {
+			'type':icmp_t,
+			'code':code,
+			'name':icmp_iana_t[str(icmp_t)]["str"]
+			}
+		else: # Unknown iana message, non standard shall be discarded
+			return None 
 		# return {'type':icmp_iana_t[str(icmp_t)]["str"]}
 	# Process UDP Datagram
 	def udp_processing(self,rawp):

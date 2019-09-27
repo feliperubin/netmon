@@ -161,6 +161,46 @@ class Scanner():
 			self.icmp_discovery()
 		return 0
 
+
+# https://nmap.org/book/scan-methods-udp-scan.html
+# Probe Response	Assigned State
+# Any UDP response from target port (unusual)	open
+# No response received (even after retransmissions)	open|filtered
+# ICMP port unreachable error (type 3, code 3)	closed
+# Other ICMP unreachable errors (type 3, code 1, 2, 9, 10, or 13)	filtered
+
+	def udp_scan_wait(self,ip_dst,dstp):
+		# 7 is echo
+		udp_packet = self.creator.udp_packet(\
+			self.udp_sc.ip,7,utils.dotted2bytes(ip_dst),dstp)
+
+		dest_addr = socket.gethostbyname(ip_dst)
+		self.udp_sc.sendto(udp_packet,dest_addr,dstp)
+		for i in range(0,5):
+			try:
+				sniffer = self.sc.sniffer(timeout=0.5)
+				raw_packet,address = next(sniffer)
+				packet = self.inspector.process(raw_packet)
+				if packet is not None:
+					if packet['eth']['type'] == 'ip':
+						if packet['ip']['src'] == ip_dst and \
+						packet['ip']['dst'] == utils.bytes2dotted(self.sc.ip):
+							if packet['ip']['protocol'] == 'udp':
+									if packet['udp']['dst'] == 7:
+										return "open"
+							elif packet['ip']['protocol'] == 'icmp':
+								if packet['icmp']['type'] == 3:
+									if packet['icmp']['code'] == 0x3:
+										return "closed"
+									elif packet['icmp']['code'] in [1,2,9,10,13]:
+										return "filtered"
+			except socket.timeout:
+				pass
+
+		return "open|filtered"
+
+
+
 	def tcp_scan_wait(self,ip_dst,dstp):
 		tcp_syn_packet = self.creator.tcp_syn(
 			self.tcp_sc.ip,80,utils.dotted2bytes(ip_dst),dstp)
@@ -170,7 +210,7 @@ class Scanner():
 		self.tcp_sc.sendto(tcp_syn_packet,dest_addr,dstp)
 		# start_time = time.time()
 		# time.sleep(2)
-		time.time()
+		# time.time()
 		for i in range(0,5):
 			try:
 				# self.sc.send(tcp_syn_packet)
@@ -191,15 +231,6 @@ class Scanner():
 											return True
 										else:
 											continue
-
-							
-					# if packet['eth']['type'] == 'ip':
-					# 	if packet['ip']['protocol'] == 'tcp':
-					# 		if packet['ip']['src'] == ip_dst and \
-					# 		packet['ip']['dst'] == utils.bytes2dotted(self.sc.ip):
-
-								# return curr_time-start_time
-								# return packet['tcp']['src']
 			except socket.timeout:
 				pass
 		return False
@@ -210,9 +241,15 @@ class Scanner():
 		for host in self.cache:
 			for pg in self.ports:
 				for port in range(pg[0],pg[1]+1):
+					print("Testing port",port)
 					# if self.tcp_scan_wait(host,self.cache[host],port):
-					if self.tcp_scan_wait(host,port):
+					tcp_port = self.tcp_scan_wait(host,port)
+					udp_port = self.udp_scan_wait(host,port)
+					if tcp_port:
 						print("Host %s has port %s/tcp open" % (host,port))
+					if udp_port in ["open","filtered"]:
+						print("Host %s has port %s/udp %s" % (host,port,udp_port))
+
 		# for 
 		return 0
 
