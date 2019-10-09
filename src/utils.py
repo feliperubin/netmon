@@ -22,9 +22,6 @@ def checksum(msg):
     s = ~s & 0xffff
     return socket.ntohs(s)
 
-
-
-
 # Replace all code which uses socket directly with the following
 def bytes2dotted(bytesip):
 	return socket.inet_ntoa(bytesip)

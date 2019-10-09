@@ -1,9 +1,4 @@
 
-
-# import threading
-# import Queue
-
-# Mode: Passive 0 ,  Active 1
 # Raw Buffer: Receives Raw Packages to filter later
 # Packet Data: Packets that were stored
 # Packet Metrics: Metrics regarding the obtained packets
@@ -45,18 +40,30 @@ class Monitor():
 				self.pretty_print(value,padding+incr)
 			else:
 				print(padding+str(key)+": "+str(value))
-	def ordered_print(self,dpacket,padding="",incr=" "):
-		print("[eth src:%s dst:%s type:%s]" % (dpacket['eth']['src'],dpacket['eth']['dst'],dpacket['eth']['type']))
-		for key,value in dpacket.items():
-			if rt != "":
-				rt+=","
-			if type(value) is dict:
-				rt+=padding+str(key)+":"
-				rt+=self.compact_print(value,padding+incr)
+	def ordered_print(self,p,padding="",incr=" "):
+		print("[eth src:%s dst:%s type:%s]" % (p['eth']['src'],p['eth']['dst'],p['eth']['type']))
+		if p['eth']['type'] == "ip":
+			print("[ip src:%s dst:%s proto:%s ttl:%d]" % (p['ip']['src'],p['ip']['dst'],p['ip']['protocol'],p['ip']['ttl']))
+			if p['ip']['protocol'] == "icmp":
+				px = p['icmp']
+				if px['type'] == 0 or px['type'] == 8:
+					print("[icmp type:%s id:%d sequence:%d payload:%s]" % (px['name'],px['id'],px['sequence'],px['payload']))
+				else:
+					print("[icmp type:%s]",px['name'])
 			else:
-				rt+=padding+str(key)+":"+str(value)
-		return "["+rt+"]"
+				px = p[p['ip']['protocol']]
+				print("["+p['ip']['protocol']+" src:%d dst:%d]" % (px['src'],px['dst'])) 
+		else:
+			s = 'response'
+			if p['arp']['op'] == 1:
+				s = 'request'
+			print("[arp %s src:(mac:%s,ip:%s)\ndst:(mac:%s,ip:%s) op:%s]" % (
+				s,
+			 	p['arp']['src']['mac'],p['arp']['src']['ip'],
+			 	p['arp']['dst']['mac'],p['arp']['dst']['ip'],
+			 	p['arp']['op']))
 	
+
 	def start_sniffer(self):
 		while self.on:
 			self.raw_buffer.put(next(sniffer))
@@ -141,7 +148,8 @@ class Monitor():
 
 				if self.verbose:
 					print("*************************")
-					self.pretty_print(packet," ","  ")
+					# self.pretty_print(packet," ","  ")
+					self.ordered_print(packet)
 					# print(self.compact_print(packet,"",""))
 					# print("Packet: ",packet)
 			else:
@@ -155,20 +163,3 @@ class Monitor():
 		self.on = 0
 		return 0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		

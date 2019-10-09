@@ -247,7 +247,7 @@ class Scanner():
 					udp_port = self.udp_scan_wait(host,port)
 					if tcp_port:
 						print("Host %s has port %s/tcp open" % (host,port))
-					if udp_port in ["open","filtered"]:
+					if udp_port in ["open","filtered","open|filtered"]:
 						print("Host %s has port %s/udp %s" % (host,port,udp_port))
 
 		# for 
